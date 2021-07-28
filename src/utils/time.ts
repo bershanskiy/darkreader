@@ -91,6 +91,8 @@ function getSunsetSunriseUTCTime(
     // convert the longitude to hour value and calculate an approximate time
     const lnHour = longitude / 15;
 
+    const log: any = {lnHour, date, latitude, longitude, dec31, oneDay, dayOfYear};
+
     function getTime(isSunrise: boolean) {
         const t = dayOfYear + (((isSunrise ? 6 : 18) - lnHour) / 24);
 
@@ -127,6 +129,10 @@ function getSunsetSunriseUTCTime(
 
         // calculate the Sun's local hour angle
         const cosH = (Math.cos(zenith * D2R) - (sinDec * Math.sin(latitude * D2R))) / (cosDec * Math.cos(latitude * D2R));
+
+        const key = isSunrise ? 'rise' : 'set';
+        log[key] = {t, M, L, RA, sinDec, cosDec, cosH};
+
         if (cosH > 1) {
             // always night
             return {
@@ -156,6 +162,10 @@ function getSunsetSunriseUTCTime(
             UT += 24;
         }
 
+        log[key].H = H;
+        log[key].T = T;
+        log[key].UT = UT;
+
         // convert to milliseconds
         return {
             alwaysDay: false,
@@ -166,6 +176,8 @@ function getSunsetSunriseUTCTime(
 
     const sunriseTime = getTime(true);
     const sunsetTime = getTime(false);
+
+    console.log(JSON.stringify(log));
 
     if (sunriseTime.alwaysDay || sunsetTime.alwaysDay) {
         return {
