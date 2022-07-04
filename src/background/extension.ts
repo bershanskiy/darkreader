@@ -689,15 +689,22 @@ export class Extension implements ExtensionState {
                     };
                 }
                 case ThemeEngines.staticTheme: {
-                    return {
+                    const message: any = {
                         type: MessageType.BG_ADD_STATIC_THEME,
                         data: {
-                            css: theme.stylesheet && theme.stylesheet.trim() ?
-                                theme.stylesheet :
-                                createStaticStylesheet(theme, url, frameURL, this.config.STATIC_THEMES_RAW, this.config.STATIC_THEMES_INDEX),
                             detectDarkTheme: settings.detectDarkTheme,
                         },
                     };
+                    if (theme.stylesheet && theme.stylesheet.trim()) {
+                        message.data.css = theme.stylesheet;
+                        message.data.ids = null;
+                    } else {
+                        const data = createStaticStylesheet(theme, url, frameURL, this.config.STATIC_THEMES_RAW, this.config.STATIC_THEMES_INDEX);
+                        message.data.css = data.css;
+                        message.data.ids = data.ids;
+                    }
+
+                    return message;
                 }
                 case ThemeEngines.dynamicTheme: {
                     const fixes = getDynamicThemeFixesFor(url, frameURL, this.config.DYNAMIC_THEME_FIXES_RAW, this.config.DYNAMIC_THEME_FIXES_INDEX, this.user.settings.enableForPDF);

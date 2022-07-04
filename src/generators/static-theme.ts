@@ -70,7 +70,7 @@ export default function createStaticStylesheet(config: FilterConfig, url: string
     }, {} as ThemeColors);
 
     const commonTheme = getCommonTheme(staticThemes, staticThemesIndex);
-    const siteTheme = getThemeFor(frameURL || url, staticThemes, staticThemesIndex);
+    const {fix: siteTheme, ids} = getThemeFor(frameURL || url, staticThemes, staticThemesIndex);
 
     const lines: string[] = [];
 
@@ -89,9 +89,10 @@ export default function createStaticStylesheet(config: FilterConfig, url: string
         lines.push(createTextStyle(config));
     }
 
-    return lines
-        .filter((ln) => ln)
-        .join('\n');
+    return {
+        css: lines.filter((ln) => ln).join('\n'),
+        ids
+    };
 }
 
 function createRuleGen(getSelectors: (siteTheme: StaticTheme) => string[], generateDeclarations: (theme: ThemeColors) => string[], modifySelector: ((s: string) => string) = (s) => s) {
@@ -267,7 +268,7 @@ function getThemeFor(url: string, staticThemes: string, staticThemesIndex: SiteP
             return parseArray(value);
         }
     });
-    const sortedBySpecificity = themes
+    const sortedBySpecificity = themes.fixes
         .slice(1)
         .map((theme) => {
             return {
@@ -282,5 +283,5 @@ function getThemeFor(url: string, staticThemes: string, staticThemesIndex: SiteP
         return null;
     }
 
-    return sortedBySpecificity[0].theme;
+    return {fix: sortedBySpecificity[0].theme, ids: themes.ids};
 }

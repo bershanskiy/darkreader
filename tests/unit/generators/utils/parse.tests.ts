@@ -3,6 +3,7 @@ import type {SitesFixesParserOptions} from '../../../../src/generators/utils/par
 
 test('Index config', () => {
     interface TestFix {
+        id: number;
         url: string[];
         directive: string[];
         multilineDirective: string[];
@@ -42,7 +43,7 @@ test('Index config', () => {
     };
     const index = indexSitesFixesConfig<TestFix>(config);
 
-    const fixes = getSitesFixesFor('example.com', config, index, options);
+    const fixes = getSitesFixesFor('example.com', config, index, options).fixes;
     expect(fixes).toEqual([
         {
             'url': ['*'],
@@ -57,6 +58,7 @@ test('Index config', () => {
 
 test('Empty config', () => {
     interface TestFix {
+        id: number;
         url: string[];
         directive: string[];
     }
@@ -84,8 +86,8 @@ test('Empty config', () => {
     };
     const index = indexSitesFixesConfig<TestFix>(config);
 
-    const fixesGeneric = getSitesFixesFor('example.com', config, index, options);
-    const fixesInvalid = getSitesFixesFor('invalid.example', config, index, options);
+    const fixesGeneric = getSitesFixesFor('example.com', config, index, options).fixes;
+    const fixesInvalid = getSitesFixesFor('invalid.example', config, index, options).fixes;
     expect(fixesGeneric).toEqual([{
         'url': ['*'],
         'directive': 'hello world',
@@ -95,6 +97,7 @@ test('Empty config', () => {
 
 test('Domain appearing in multiple records', () => {
     interface TestFix {
+        id: number;
         url: string[];
         directive: string[];
     }
@@ -142,8 +145,8 @@ test('Domain appearing in multiple records', () => {
     };
     const index = indexSitesFixesConfig<TestFix>(config);
 
-    const fixesFQD = getSitesFixesFor('example.com', config, index, options);
-    const fixesWildcard = getSitesFixesFor('sub.example.net', config, index, options);
+    const fixesFQD = getSitesFixesFor('example.com', config, index, options).fixes;
+    const fixesWildcard = getSitesFixesFor('sub.example.net', config, index, options).fixes;
     expect(fixesFQD).toEqual([
         {
             'url': ['*'],
@@ -176,6 +179,7 @@ test('Domain appearing in multiple records', () => {
 
 test('Domain appearing multiple times within the same record', () => {
     interface TestFix {
+        id: number;
         url: string[];
         directive: string[];
     }
@@ -209,8 +213,8 @@ test('Domain appearing multiple times within the same record', () => {
     };
     const index = indexSitesFixesConfig<TestFix>(config);
 
-    const fixesFQD = getSitesFixesFor('example.com', config, index, options);
-    const fixesWildcard = getSitesFixesFor('sub.example.net', config, index, options);
+    const fixesFQD = getSitesFixesFor('example.com', config, index, options).fixes;
+    const fixesWildcard = getSitesFixesFor('sub.example.net', config, index, options).fixes;
     expect(fixesFQD).toEqual([
         {
             'url': ['*'],
@@ -241,6 +245,7 @@ test('Domain appearing multiple times within the same record', () => {
 
 test('The generic fix appears first', () => {
     interface TestFix {
+        id: number;
         url: string[];
         directive: string[];
     }
@@ -285,7 +290,7 @@ test('The generic fix appears first', () => {
     };
     const index = indexSitesFixesConfig<TestFix>(config);
 
-    const fixesFQD = getSitesFixesFor('long.sub.example.com', config, index, options);
+    const fixesFQD = getSitesFixesFor('long.sub.example.com', config, index, options).fixes;
     expect(fixesFQD).toEqual([
         {
             'url': ['*'],
@@ -304,6 +309,7 @@ test('The generic fix appears first', () => {
 
 test('Fixes appear only once', () => {
     interface TestFix {
+        id: number;
         url: string[];
         directive: string[];
     }
@@ -335,7 +341,7 @@ test('Fixes appear only once', () => {
     };
     const index = indexSitesFixesConfig<TestFix>(config);
 
-    const fixes = getSitesFixesFor('www.example.com', config, index, options);
+    const fixes = getSitesFixesFor('www.example.com', config, index, options).fixes;
     expect(fixes).toEqual([
         {
             'url': ['*'],
@@ -351,6 +357,7 @@ test('Fixes appear only once', () => {
 
 test('Implied wildcards', () => {
     interface TestFix {
+        id: number;
         url: string[];
         directive: string[];
     }
@@ -381,7 +388,7 @@ test('Implied wildcards', () => {
     };
     const index = indexSitesFixesConfig<TestFix>(config);
 
-    const fixes = getSitesFixesFor('www.example.com', config, index, options);
+    const fixes = getSitesFixesFor('www.example.com', config, index, options).fixes;
     expect(fixes).toEqual([
         {
             'url': ['*'],
@@ -397,6 +404,7 @@ test('Implied wildcards', () => {
 // Regression test which ensures parser properly splits blocks (ignores Base64 padding within CSS).
 test('Base64 in CSS', () => {
     interface TestFix {
+        id: number;
         url: string[];
         directive: string[];
         css: string[];
@@ -431,7 +439,7 @@ test('Base64 in CSS', () => {
     };
     const index = indexSitesFixesConfig<TestFix>(config);
 
-    const fixes = getSitesFixesFor('www.example.com', config, index, options);
+    const fixes = getSitesFixesFor('www.example.com', config, index, options).fixes;
     expect(fixes).toEqual([
         {
             'url': ['*'],

@@ -169,8 +169,9 @@ export function parseSiteFixConfig<T extends SiteProps>(text: string, options: S
  * Given a URL, fixes, and an index, finds the applicable fixes.
  * Note that dependents assume that the first returned fix is a generic fix (has URL pattern '*').
  */
-export function getSitesFixesFor<T extends SiteProps>(url: string, text: string, index: SitePropsIndex<T>, options: SitesFixesParserOptions<T>): T[] {
+export function getSitesFixesFor<T extends SiteProps>(url: string, text: string, index: SitePropsIndex<T>, options: SitesFixesParserOptions<T>): {fixes: T[]; ids: number[]} {
     const records: T[] = [];
+    const ids: number[] = [];
     let recordIds: number[] = [];
     const domain = getDomain(url);
     for (const pattern of Object.keys(index.domainPatterns)) {
@@ -199,7 +200,8 @@ export function getSitesFixesFor<T extends SiteProps>(url: string, text: string,
             index.cache[id] = parseSiteFixConfig<T>(text, options, start, end);
         }
         records.push(index.cache[id]);
+        ids.push(id);
     }
 
-    return records;
+    return {fixes: records, ids};
 }

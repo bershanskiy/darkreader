@@ -48,7 +48,7 @@ export function formatDynamicThemeFixes(dynamicThemeFixes: DynamicThemeFix[]) {
 }
 
 export function getDynamicThemeFixesFor(url: string, frameURL: string, text: string, index: SitePropsIndex<DynamicThemeFix>, enabledForPDF: boolean) {
-    const fixes = getSitesFixesFor(frameURL || url, text, index, {
+    const {fixes, ids} = getSitesFixesFor(frameURL || url, text, index, {
         commands: Object.keys(dynamicThemeFixesCommands),
         getCommandPropName: (command) => dynamicThemeFixesCommands[command],
         parseCommandValue: (command, value) => {
@@ -90,16 +90,19 @@ export function getDynamicThemeFixesFor(url: string, frameURL: string, text: str
         .sort((a, b) => b.specificity - a.specificity);
 
     if (sortedBySpecificity.length === 0) {
-        return common;
+        return {fix: common, ids};
     }
 
     const match = sortedBySpecificity[0].theme;
 
     return {
-        url: match.url,
-        invert: common.invert.concat(match.invert || []),
-        css: [common.css, match.css].filter((s) => s).join('\n'),
-        ignoreInlineStyle: common.ignoreInlineStyle.concat(match.ignoreInlineStyle || []),
-        ignoreImageAnalysis: common.ignoreImageAnalysis.concat(match.ignoreImageAnalysis || []),
+        fix: {
+            url: match.url,
+            invert: common.invert.concat(match.invert || []),
+            css: [common.css, match.css].filter((s) => s).join('\n'),
+            ignoreInlineStyle: common.ignoreInlineStyle.concat(match.ignoreInlineStyle || []),
+            ignoreImageAnalysis: common.ignoreImageAnalysis.concat(match.ignoreImageAnalysis || []),
+        },
+        ids
     };
 }

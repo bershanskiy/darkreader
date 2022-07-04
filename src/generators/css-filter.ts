@@ -34,7 +34,7 @@ export default function createCSSFilterStyleSheet(config: FilterConfig, url: str
 }
 
 export function cssFilterStyleSheetTemplate(filterValue: string, reverseFilterValue: string, config: FilterConfig, url: string, frameURL: string, fixes: string, index: SitePropsIndex<InversionFix>) {
-    const fix = getInversionFixesFor(frameURL || url, fixes, index);
+    const {fix, ids} = getInversionFixesFor(frameURL || url, fixes, index);
 
     const lines: string[] = [];
 
@@ -100,7 +100,7 @@ export function cssFilterStyleSheetTemplate(filterValue: string, reverseFilterVa
     lines.push('');
     lines.push('}');
 
-    return lines.join('\n');
+    return {css: lines.join('\n'), ids};
 }
 
 export function getCSSFilterValue(config: FilterConfig) {
@@ -174,8 +174,8 @@ function createReverseRule(reverseFilterValue: string, fix: InversionFix): strin
 * @param url Site URL.
 * @param inversionFixes List of inversion fixes.
 */
-export function getInversionFixesFor(url: string, fixes: string, index: SitePropsIndex<InversionFix>): InversionFix {
-    const inversionFixes = getSitesFixesFor<InversionFix>(url, fixes, index, {
+export function getInversionFixesFor(url: string, fixes: string, index: SitePropsIndex<InversionFix>): {fix: InversionFix; ids: number[]} {
+    const data = getSitesFixesFor<InversionFix>(url, fixes, index, {
         commands: Object.keys(inversionFixesCommands),
         getCommandPropName: (command) => inversionFixesCommands[command],
         parseCommandValue: (command, value) => {
@@ -186,6 +186,8 @@ export function getInversionFixesFor(url: string, fixes: string, index: SiteProp
         },
     });
 
+    const ids = data.ids;
+    const inversionFixes = data.fixes;
     const common = {
         url: inversionFixes[0].url,
         invert: inversionFixes[0].invert || [],
@@ -203,15 +205,18 @@ export function getInversionFixesFor(url: string, fixes: string, index: SiteProp
         if (matches.length > 0) {
             const found = matches[0];
             return {
-                url: found.url,
-                invert: common.invert.concat(found.invert || []),
-                noinvert: common.noinvert.concat(found.noinvert || []),
-                removebg: common.removebg.concat(found.removebg || []),
-                css: [common.css, found.css].filter((s) => s).join('\n'),
+                fix: {
+                    url: found.url,
+                    invert: common.invert.concat(found.invert || []),
+                    noinvert: common.noinvert.concat(found.noinvert || []),
+                    removebg: common.removebg.concat(found.removebg || []),
+                    css: [common.css, found.css].filter((s) => s).join('\n'),
+                },
+                ids
             };
         }
     }
-    return common;
+    return {fix: common, ids};
 }
 
 const inversionFixesCommands: { [key: string]: keyof InversionFix } = {
