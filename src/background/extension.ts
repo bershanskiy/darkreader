@@ -17,7 +17,7 @@ import createStaticStylesheet from '../generators/static-theme';
 import {createSVGFilterStylesheet, getSVGFilterMatrixValue, getSVGReverseFilterMatrixValue} from '../generators/svg-filter';
 import type {ExtensionData, FilterConfig, News, Shortcuts, UserSettings, TabInfo, TabData} from '../definitions';
 import {isSystemDarkModeEnabled} from '../utils/media-query';
-import {isFirefox, isMV3, isThunderbird} from '../utils/platform';
+import {isFirefox, isThunderbird} from '../utils/platform';
 import {MessageType} from '../utils/message';
 import {logInfo, logWarn} from '../utils/log';
 import {PromiseBarrier} from '../utils/promise-barrier';
@@ -37,6 +37,7 @@ interface SystemColorState {
 }
 
 declare const __DEBUG__: boolean;
+declare const __MV3__: boolean;
 
 export class Extension implements ExtensionState {
     config: ConfigManager;
@@ -97,7 +98,7 @@ export class Extension implements ExtensionState {
     }
 
     private async MV3initSystemColorStateManager(isDark: boolean | null): Promise<void> {
-        if (!isMV3) {
+        if (!__MV3__) {
             return;
         }
         if (!this.systemColorStateManager) {
@@ -115,7 +116,7 @@ export class Extension implements ExtensionState {
     }
 
     private async MV3saveSystemColorStateManager(): Promise<void> {
-        if (!isMV3) {
+        if (!__MV3__) {
             return;
         }
         if (!this.systemColorStateManager) {
@@ -143,11 +144,11 @@ export class Extension implements ExtensionState {
     }
 
     private updateAutoState() {
-        const {automation, automationBehaviour: behavior} = this.user.settings;
+        const {mode, behavior, enabled} = this.user.settings.automation;
 
         let isAutoDark: boolean;
         let nextCheck: number;
-        switch (automation) {
+        switch (mode) {
             case 'time': {
                 const {time} = this.user.settings;
                 isAutoDark = isInTimeIntervalLocal(time.activation, time.deactivation);
@@ -155,7 +156,7 @@ export class Extension implements ExtensionState {
                 break;
             }
             case 'system':
-                if (isMV3) {
+                if (__MV3__) {
                     isAutoDark = this.isDark;
                     if (this.isDark === null) {
                         logWarn('System color scheme is unknown. Defaulting to Dark.');
@@ -185,7 +186,7 @@ export class Extension implements ExtensionState {
         }
 
         let state: AutomationState = '';
-        if (automation) {
+        if (enabled) {
             if (behavior === 'OnOff') {
                 state = isAutoDark ? 'turn-on' : 'turn-off';
             } else if (behavior === 'Scheme') {
@@ -315,7 +316,7 @@ export class Extension implements ExtensionState {
                 logInfo('Toggle command entered');
                 this.changeSettings({
                     enabled: !this.isExtensionSwitchedOn(),
-                    automation: '',
+                    automation: {...this.user.settings.automation, ...{enable: false}},
                 });
                 break;
             case 'addSite': {
@@ -471,7 +472,7 @@ export class Extension implements ExtensionState {
         if (isFirefox) {
             this.wasLastColorSchemeDark = isDark;
         }
-        if (this.user.settings.automation !== 'system') {
+        if (this.user.settings.automation.mode !== 'system') {
             return;
         }
         this.callWhenSettingsLoaded(() => {
@@ -504,8 +505,9 @@ export class Extension implements ExtensionState {
 
         if (
             (prev.enabled !== this.user.settings.enabled) ||
-            (prev.automation !== this.user.settings.automation) ||
-            (prev.automationBehaviour !== this.user.settings.automationBehaviour) ||
+            (prev.automation.enabled !== this.user.settings.automation.enabled) ||
+            (prev.automation.mode !== this.user.settings.automation.mode) ||
+            (prev.automation.behavior !== this.user.settings.automation.behavior) ||
             (prev.time.activation !== this.user.settings.time.activation) ||
             (prev.time.deactivation !== this.user.settings.time.deactivation) ||
             (prev.location.latitude !== this.user.settings.location.latitude) ||

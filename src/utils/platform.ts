@@ -47,6 +47,14 @@ export const chromiumVersion = (() => {
     return '';
 })();
 
+export const firefoxVersion = (() => {
+    const m = userAgent.match(/(?:firefox|librewolf)(?:\/| )([^ ]+)/);
+    if (m && m[1]) {
+        return m[1];
+    }
+    return '';
+})();
+
 export const isDefinedSelectorSupported = (() => {
     try {
         document.querySelector(':defined');
@@ -70,8 +78,6 @@ export function compareChromeVersions($a: string, $b: string) {
 export const isXMLHttpRequestSupported = typeof XMLHttpRequest === 'function';
 
 export const isFetchSupported = typeof fetch === 'function';
-
-export const isMV3 = (globalThis as any).chrome && (globalThis as any).chrome.runtime && (globalThis as any).chrome.runtime.getManifest && (globalThis as any).chrome.runtime.getManifest().manifest_version === 3;
 
 export const isCSSColorSchemePropSupported = (() => {
     if (typeof document === 'undefined') {

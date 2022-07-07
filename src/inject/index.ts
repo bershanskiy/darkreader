@@ -2,20 +2,16 @@ import {createOrUpdateStyle, removeStyle} from './style';
 import {createOrUpdateSVGFilter, removeSVGFilter} from './svg-filter';
 import {runDarkThemeDetector, stopDarkThemeDetector} from './detector';
 import {createOrUpdateDynamicTheme, removeDynamicTheme, cleanDynamicThemeCache} from './dynamic-theme';
-import {logInfo, logWarn, logInfoCollapsed} from '../utils/log';
+import {logWarn, logInfoCollapsed} from '../utils/log';
 import {isSystemDarkScheme, runColorSchemeChangeDetector, stopColorSchemeChangeDetector} from './utils/watch-color-scheme';
 import {collectCSS} from './dynamic-theme/css-collection';
 import type {Message} from '../definitions';
 import {MessageType} from '../utils/message';
-import {isMV3, isThunderbird} from '../utils/platform';
+import {isThunderbird} from '../utils/platform';
 
 let unloaded = false;
 
-// TODO: Use background page color scheme watcher when browser bugs fixed.
-runColorSchemeChangeDetector((isDark) => {
-    logInfo('Media query was changed');
-    sendMessage({type: MessageType.CS_COLOR_SCHEME_CHANGE, data: {isDark}});
-});
+declare const __MV3__: boolean;
 
 function cleanup() {
     unloaded = true;
@@ -41,17 +37,30 @@ function sendMessage(message: Message) {
         }
     };
 
-    if (isMV3) {
+    try {
+        if (__MV3__) {
+            const promise: Promise<Message | 'unsupportedSender'> = chrome.runtime.sendMessage<Message>(message) as any;
+            promise.then(responseHandler).catch(cleanup);
+        } else {
+            chrome.runtime.sendMessage<Message, 'unsupportedSender' | undefined>(message, responseHandler);
+        }
+    } catch (error) {
         /*
-         * Background can be unreachable if:
+         * We get here if Background context is unreachable which occurs when:
          *  - extension was disabled
          *  - extension was uninstalled
          *  - extension was updated and this is the old instance of content script
+         *
+         * Any async operations can be ignored here, but sync ones should run to completion.
+         *
+         * Regular message passing errors are returned via rejected promise or runtime.lastError.
          */
-        const promise: Promise<Message | 'unsupportedSender'> = chrome.runtime.sendMessage<Message>(message) as any;
-        promise.then(responseHandler).catch(cleanup);
-    } else {
-        chrome.runtime.sendMessage<Message, 'unsupportedSender' | undefined>(message, responseHandler);
+        if (error.message === 'Extension context invalidated.') {
+            console.log('Dark Reader: instance of old CS detected, clening up.');
+            cleanup();
+        } else {
+            console.log('Dark Reader: unexpected error during message passing.');
+        }
     }
 }
 
@@ -121,6 +130,10 @@ function onMessage({type, data}: Message) {
             break;
     }
 }
+
+runColorSchemeChangeDetector((isDark) =>
+    sendMessage({type: MessageType.CS_COLOR_SCHEME_CHANGE, data: {isDark}})
+);
 
 chrome.runtime.onMessage.addListener(onMessage);
 sendMessage({type: MessageType.CS_FRAME_CONNECT, data: {isDark: isSystemDarkScheme()}});
