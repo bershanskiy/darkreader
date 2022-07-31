@@ -110,7 +110,7 @@ export class Extension {
         }
     }
 
-    private alarmListener = (alarm: chrome.alarms.Alarm): void => {
+    private alarmListener (alarm: chrome.alarms.Alarm): void {
         if (alarm.name === Extension.ALARM_NAME) {
             this.loadData().then(() => this.handleAutomationCheck());
         }

@@ -66,6 +66,9 @@ export default class Newsmaker {
         chrome.alarms.clear(Newsmaker.ALARM_NAME);
     }
 
+    /**
+     * Fetches news from the website, bypassing network cache, and processes them.
+     */
     private static async updateNews() {
         const news = await Newsmaker.getNews();
         if (Array.isArray(news)) {
@@ -104,6 +107,9 @@ export default class Newsmaker {
         ]));
     }
 
+    /**
+     * Fetches news from the website, bypassing network cache.
+     */
     private static async getNews() {
         try {
             const response = await fetch(`https://darkreader.github.io/blog/posts.json`, {cache: 'no-cache'});

@@ -8,6 +8,7 @@ import type {ParsedColorSchemeConfig} from '../utils/colorscheme-parser';
 import {ParseColorSchemeConfig} from '../utils/colorscheme-parser';
 import {logWarn} from '../utils/log';
 import {DEFAULT_COLORSCHEME} from '../defaults';
+import {StateManager} from 'utils/state-manager';
 
 const CONFIG_URLs = {
     darkSites: {
@@ -40,7 +41,21 @@ interface Config {
     remoteURL?: string;
 }
 
+interface ConfigManagerState {
+    lastUpdate: number | null;
+    updadePeriodInMinutes: number | null;
+}
+
 export default class ConfigManager {
+    private static ALARM_NAME = 'config-fetch-alarm';
+    private static LOCAL_STORAGE_KEY = 'ConfigManager-state';
+    private static LOCAL_STORAGE_KEY_CONFIG = 'ConfigManager-data';
+    // Time of the last update, in Unix time
+    private static lastUpdate: number | null = null;
+    private static updadePeriodInMinutes: number | null = null;
+    private static stateManager: StateManager<ConfigManagerState> = null;
+    private static initialized = false;
+
     static DARK_SITES?: string[];
     static DYNAMIC_THEME_FIXES_INDEX?: SitePropsIndex<DynamicThemeFix>;
     static DYNAMIC_THEME_FIXES_RAW?: string;
@@ -64,6 +79,83 @@ export default class ConfigManager {
         inversionFixes: null as string,
         staticThemes: null as string,
     };
+
+    private static async initialize() {
+        if (this.initialized) {
+            return;
+        }
+        if (!this.stateManager) {
+            this.stateManager = new StateManager<ConfigManagerState>(this.LOCAL_STORAGE_KEY, this, {
+                lastUpdate: null,
+                updadePeriodInMinutes: null,
+            });
+            await this.stateManager.loadState();
+            this.initialized = true;
+            return;
+        }
+        await this.stateManager.loadState();
+    }
+
+    private static async fetchConfig() {
+        await this.initialize();
+        const promises: Array<Promise<string>> = [];
+        const names: string[] = [];
+        // Load all configs in parallel
+        Object.entries(CONFIG_URLs).forEach(([configName, {remote}]) => {
+            names.push(configName);
+            promises.push(readText({
+                url: `${remote}?nocache=${Date.now()}`,
+                timeout: REMOTE_TIMEOUT_MS
+            }));
+        });
+        let configs: string[];
+        try {
+            configs = await Promise.all(promises);
+        } catch (err) {
+            console.error(`remote load error`, err);
+        }
+        if (!configs) {
+            return;
+        }
+        const storage: {[name: string]: string} = {};
+        for (let i = 0; i < names.length; i++) {
+            storage[names[i]] = configs[i];
+        }
+        await chrome.storage.local.set(storage);
+        this.lastUpdate = Date.now();
+        await this.stateManager.saveState();
+    }
+
+    private static alarmListener (alarm: chrome.alarms.Alarm): void {
+        if (alarm.name === this.ALARM_NAME) {
+            this.fetchConfig;
+        }
+    }
+
+    /**
+     * Sets update interval and automatically fetches updates if it is time to.
+     * @param periodInMinutes Update interval in minutes or null to disable updates.
+     */
+    static async setUpdateInterval(periodInMinutes: number | null) {
+        await this.initialize();
+        if (periodInMinutes === null) {
+            chrome.alarms.clear(this.ALARM_NAME);
+            chrome.storage.local.remove(this.LOCAL_STORAGE_KEY_CONFIG);
+            this.lastUpdate = null;
+            this.updadePeriodInMinutes = null;
+            await this.stateManager.saveState();
+            return;
+        }
+        chrome.alarms.onAlarm.addListener(this.alarmListener);
+        chrome.alarms.create(this.ALARM_NAME, {periodInMinutes});
+        this.updadePeriodInMinutes = periodInMinutes;
+        await this.stateManager.saveState();
+        // Fetch config now, if needed.
+        if (this.lastUpdate === null || (this.lastUpdate + getDuration({minutes: periodInMinutes}) < Date.now())) {
+            await this.fetchConfig();
+        }
+        return;
+    }
 
     private static async loadConfig({
         name,
