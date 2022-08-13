@@ -41,11 +41,15 @@ export default class Messenger {
             chrome.runtime.getURL('/ui/devtools/index.html'),
             chrome.runtime.getURL('/ui/stylesheet-editor/index.html')
         ];
+        const pickerURLPrefix = chrome.runtime.getURL('/ui/picker/index.html&t=');
         if (allowedSenderURL.includes(sender.url)) {
             this.onUIMessage(message, sendResponse);
             return ([
                 MessageType.UI_GET_DATA,
             ].includes(message.type));
+        } else if (sender.url.startsWith(pickerURLPrefix)) {
+            const token = sender.url.substring(pickerURLPrefix.length);
+            this.onPickerMessage(message, token);
         }
     }
 
@@ -150,6 +154,10 @@ export default class Messenger {
             default:
                 break;
         }
+    }
+
+    private static onPickerMessage(message: Message, token: string) {
+
     }
 
     static reportChanges(data: ExtensionData) {

@@ -273,6 +273,11 @@ export class Extension {
                 this.setTheme({engine: next});
                 break;
             }
+            case 'openPicker': {
+                logInfo('Picker opened via command');
+                TabManager.openPicker();
+                break;
+            }
         }
     };
 
@@ -296,6 +301,7 @@ export class Extension {
                 const msgToggle = chrome.i18n.getMessage('toggle_extension');
                 const msgAddSite = chrome.i18n.getMessage('toggle_current_site');
                 const msgSwitchEngine = chrome.i18n.getMessage('theme_generation_mode');
+                const msgOpenPicker = chrome.i18n.getMessage('open_picker');
                 chrome.contextMenus.create({
                     id: 'toggle',
                     parentId: 'DarkReader-top',
@@ -310,6 +316,11 @@ export class Extension {
                     id: 'switchEngine',
                     parentId: 'DarkReader-top',
                     title: msgSwitchEngine || 'Switch engine',
+                });
+                chrome.contextMenus.create({
+                    id: 'openPicker',
+                    parentId: 'DarkReader-top',
+                    title: msgOpenPicker || 'Open picker',
                 });
                 this.registeredContextMenus = true;
             });

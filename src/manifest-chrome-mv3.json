@@ -40,7 +40,10 @@
     "web_accessible_resources": [
         {
             "matches": ["*://*/*"],
-            "resources": ["inject/proxy.js"]
+            "resources": [
+                "inject/proxy.js",
+                "ui/picker/index.html"
+            ]
         }
     ]
 }

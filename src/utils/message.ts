@@ -31,6 +31,7 @@ export enum MessageType {
     BG_FETCH_RESPONSE = 'bg-fetch-response',
     BG_UI_UPDATE = 'bg-ui-update',
     BG_CSS_UPDATE = 'bg-css-update',
+    BG_OPEN_PICKER = 'bg-open-picker',
 
     CS_COLOR_SCHEME_CHANGE = 'cs-color-scheme-change',
     CS_FRAME_CONNECT = 'cs-frame-connect',

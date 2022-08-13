@@ -8,6 +8,7 @@ import {logWarn} from '../utils/log';
 import {StateManager} from '../utils/state-manager';
 import {getURLHostOrProtocol} from '../utils/url';
 import {isPanel} from './utils/tab';
+import TokenManager from './token-manager';
 
 declare const __MV3__: boolean;
 
@@ -102,6 +103,7 @@ export default class TabManager {
                     const senderURL = sender.url;
                     const tabURL = sender.tab.url;
 
+                    TokenManager.invalidatePickerToken(tabId);
                     this.addFrame(tabId, frameId, senderURL, this.timestamp);
 
                     reply({
@@ -343,5 +345,11 @@ export default class TabManager {
             tab = tabs.find((t) => !isExtensionPage(t.url)) || tab;
         }
         return tab;
+    }
+
+    static async openPicker() {
+        const {id} = await this.getActiveTab();
+        const token = TokenManager.createPickerToken(id);
+        chrome.tabs.sendMessage<Message>(id, {type: MessageType.BG_OPEN_PICKER, data: token}, {frameId: 0});
     }
 }

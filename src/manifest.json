@@ -61,6 +61,12 @@
         },
         "switchEngine": {
             "description": "__MSG_theme_generation_mode__"
+        },
+        "openPicker": {
+            "description": "__MSG_open_picker__"
         }
-    }
+    },
+    "web_accessible_resources": [
+        "ui/picker/index.html"
+    ]
 }

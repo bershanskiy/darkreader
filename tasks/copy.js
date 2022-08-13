@@ -49,6 +49,10 @@ const copyEntries = [
         src: 'ui/stylesheet-editor/index.html',
         reloadType: reload.UI,
     },
+    {
+        src: 'ui/picker/index.html',
+        reloadType: reload.UI,
+    },
 ];
 
 const paths = copyEntries.map((entry) => entry.src).map((path) => `${srcDir}/${path}`);

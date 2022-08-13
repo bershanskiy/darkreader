@@ -28,6 +28,10 @@ const cssEntries = [
         src: 'src/ui/stylesheet-editor/style.less',
         dest: 'ui/stylesheet-editor/style.css',
     },
+    {
+        src: 'src/ui/picker/style.less',
+        dest: 'ui/picker/style.css',
+    },
 ];
 
 /** @type {string[]} */

@@ -64,6 +64,54 @@ function sendMessage(message: Message) {
     }
 }
 
+let pickerContainer: HTMLDivElement, pickerFrame: HTMLIFrameElement;
+function openPicker(token: string) {
+    if (pickerFrame || pickerContainer) {
+        return;
+    }
+
+    /**
+     * Use contentWindow.location instead of src to hide the URL from the page.
+     * This hides the extension id and token from the page.
+     * At this time, we don't rely on secrecy of presence of Dark Reader popup on the page
+     * and the secrecy of the token from the tab, but we hide it anyway just in case.
+     * To do it:
+     *  1. create container <div> and <iframe>
+     *  2. add styles to hide container <div> until picker frame is fully loaded
+     *  3. append <iframe> to <div> and <div> to body to initialize process and make <iframe> contentWindow defined
+     *  4. set <iframe> URL via iframe.contentWindow.location
+     *  5. when frame is loaded, reveal it
+     */
+
+    function onAboutBlankLoaded() {}
+
+    // Step 1
+    pickerContainer = document.createElement('div');
+    pickerFrame = document.createElement('iframe');
+    // Step 2
+    pickerContainer.style.all = 'initial !important';
+    pickerContainer.style.display = 'none';
+    pickerContainer.style.position = 'absolute';
+    pickerContainer.style.width = '0px';
+    pickerContainer.style.height = '0px';
+    pickerContainer.style.padding = '0px';
+    pickerContainer.style.border = '0px';
+    pickerContainer.style.margin = '0px';
+    pickerContainer.style.zIndex = '2147483647';
+    // Step 3
+    pickerContainer.appendChild(pickerFrame);
+    document.documentElement.appendChild(pickerContainer);
+    // Step 4
+    pickerFrame.contentWindow.location = chrome.runtime.getURL(`ui/picker/index.html?t=${token}`);
+    pickerFrame.style.zIndex = '2147483647';
+    pickerFrame.style.border = '0px';
+    pickerFrame.style.position = 'fixed';
+    pickerFrame.style.bottom = '50px';
+    pickerFrame.style.right = '50px';
+    // Step 5
+    pickerFrame.addEventListener('load', () => pickerContainer.style.display = '');
+}
+
 function onMessage({type, data}: Message) {
     logInfoCollapsed(`onMessage[${type}]`, data);
     switch (type) {
@@ -125,6 +173,9 @@ function onMessage({type, data}: Message) {
         case MessageType.BG_RELOAD:
             logWarn('Cleaning up before update');
             cleanup();
+            break;
+        case MessageType.BG_OPEN_PICKER:
+            openPicker(data);
             break;
         default:
             break;

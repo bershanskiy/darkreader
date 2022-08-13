@@ -62,6 +62,11 @@ const jsEntries = [
         dest: 'ui/stylesheet-editor/index.js',
         reloadType: reload.UI,
     },
+    {
+        src: 'src/ui/picker/index.tsx',
+        dest: 'ui/picker/index.js',
+        reloadType: reload.UI,
+    },
 ];
 
 const rollupPluginCache = {};
