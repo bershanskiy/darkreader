@@ -21,10 +21,10 @@ describe('Migrate settings', () => {
         await backgroundUtils.setDataIsMigratedForTesting(false);
 
         // Data is propagate to ExtensionData object
-        const extensionData = await backgroundUtils.collectData();
-        expect(extensionData.devtools.dynamicFixesText).toEqual(dynamicFixes);
-        expect(extensionData.devtools.filterFixesText).toEqual(filterFixes);
-        expect(extensionData.devtools.staticThemesText).toEqual(staticThemes);
+        const devToolsData = await backgroundUtils.collectDevToolsData();
+        expect(devToolsData.dynamicFixesText).toEqual(dynamicFixes);
+        expect(devToolsData.filterFixesText).toEqual(filterFixes);
+        expect(devToolsData.staticThemesText).toEqual(staticThemes);
 
         // Data is recorded into chrome.storage
         const chromeStorage = await backgroundUtils.getChromeStorage('local', [DevTools.KEY_DYNAMIC, DevTools.KEY_FILTER, DevTools.KEY_STATIC]);

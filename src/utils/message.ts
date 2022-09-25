@@ -1,7 +1,10 @@
 export enum MessageType {
     UI_GET_DATA = 'ui-get-data',
+    UI_GET_DEVTOOLS_DATA = 'ui-get-devtools-data',
     UI_SUBSCRIBE_TO_CHANGES = 'ui-subscribe-to-changes',
+    UI_SUBSCRIBE_TO_DEVTOOLS_CHANGES = 'ui-subscribe-to-devtools-changes',
     UI_UNSUBSCRIBE_FROM_CHANGES = 'ui-unsubscribe-from-changes',
+    UI_UNSUBSCRIBE_FROM_DEVTOOLS_CHANGES = 'ui-unsubscribe-from-devtools-changes',
     UI_CHANGE_SETTINGS = 'ui-change-settings',
     UI_SET_THEME = 'ui-set-theme',
     UI_SET_SHORTCUT = 'ui-set-shortcut',
@@ -20,6 +23,7 @@ export enum MessageType {
     UI_COLOR_SCHEME_CHANGE = 'ui-color-scheme-change',
 
     BG_CHANGES = 'bg-changes',
+    BG_DEVTOOLS_CHANGES = 'bg-devtools-changes',
     BG_ADD_CSS_FILTER = 'bg-add-css-filter',
     BG_ADD_STATIC_THEME = 'bg-add-static-theme',
     BG_ADD_SVG_FILTER = 'bg-add-svg-filter',

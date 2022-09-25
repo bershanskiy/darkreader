@@ -1,12 +1,14 @@
 import {isFirefox} from '../../utils/platform';
-import type {ExtensionData, ExtensionActions, FilterConfig, Message, UserSettings} from '../../definitions';
+import type {ExtensionData, DevToolsData, ExtensionActions, FilterConfig, Message, UserSettings} from '../../definitions';
 import {MessageType} from '../../utils/message';
 
 export default class Connector implements ExtensionActions {
     private changeSubscribers: Set<(data: ExtensionData) => void>;
+    private changeDevToolsSubscribers: Set<(devtools: DevToolsData) => void>;
 
     constructor() {
         this.changeSubscribers = new Set();
+        this.changeDevToolsSubscribers = new Set();
     }
 
     private async sendRequest<T>(type: MessageType, data?: string) {
@@ -44,9 +46,22 @@ export default class Connector implements ExtensionActions {
         return await this.sendRequest<ExtensionData>(MessageType.UI_GET_DATA);
     }
 
+    async getDevToolsData() {
+        if (isFirefox) {
+            return await this.firefoxSendRequestWithResponse<DevToolsData>(MessageType.UI_GET_DEVTOOLS_DATA);
+        }
+        return await this.sendRequest<DevToolsData>(MessageType.UI_GET_DEVTOOLS_DATA);
+    }
+
     private onChangesReceived = ({type, data}: Message) => {
         if (type === MessageType.BG_CHANGES) {
             this.changeSubscribers.forEach((callback) => callback(data));
+        }
+    };
+
+    private onDevToolsChangesReceived = ({type, data}: Message) => {
+        if (type === MessageType.BG_DEVTOOLS_CHANGES) {
+            this.changeDevToolsSubscribers.forEach((callback) => callback(data));
         }
     };
 
@@ -55,6 +70,14 @@ export default class Connector implements ExtensionActions {
         if (this.changeSubscribers.size === 1) {
             chrome.runtime.onMessage.addListener(this.onChangesReceived);
             chrome.runtime.sendMessage<Message>({type: MessageType.UI_SUBSCRIBE_TO_CHANGES});
+        }
+    }
+
+    subscribeToDevToolsChanges(callback: (data: DevToolsData) => void) {
+        this.changeDevToolsSubscribers.add(callback);
+        if (this.changeDevToolsSubscribers.size === 1) {
+            chrome.runtime.onMessage.addListener(this.onDevToolsChangesReceived);
+            chrome.runtime.sendMessage<Message>({type: MessageType.UI_SUBSCRIBE_TO_DEVTOOLS_CHANGES});
         }
     }
 
@@ -124,6 +147,11 @@ export default class Connector implements ExtensionActions {
             this.changeSubscribers.clear();
             chrome.runtime.onMessage.removeListener(this.onChangesReceived);
             chrome.runtime.sendMessage<Message>({type: MessageType.UI_UNSUBSCRIBE_FROM_CHANGES});
+        }
+        if (this.changeDevToolsSubscribers.size > 0) {
+            this.changeDevToolsSubscribers.clear();
+            chrome.runtime.onMessage.removeListener(this.onDevToolsChangesReceived);
+            chrome.runtime.sendMessage<Message>({type: MessageType.UI_UNSUBSCRIBE_FROM_DEVTOOLS_CHANGES});
         }
     }
 }

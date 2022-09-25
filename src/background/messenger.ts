@@ -1,9 +1,10 @@
 import {isFirefox} from '../utils/platform';
-import type {ExtensionData, FilterConfig, TabInfo, Message, UserSettings} from '../definitions';
+import type {ExtensionData, FilterConfig, TabInfo, Message, UserSettings, DevToolsData} from '../definitions';
 import {MessageType} from '../utils/message';
 
 export interface ExtensionAdapter {
     collect: () => Promise<ExtensionData>;
+    collectDevTools: () => Promise<DevToolsData>;
     changeSettings: (settings: Partial<UserSettings>) => void;
     setTheme: (theme: Partial<FilterConfig>) => void;
     setShortcut: ({command, shortcut}: {command: string; shortcut: string}) => void;
@@ -22,10 +23,12 @@ export interface ExtensionAdapter {
 export default class Messenger {
     private static adapter: ExtensionAdapter;
     private static changeListenerCount: number;
+    private static changeDevToolsListenerCount: number;
 
     static init(adapter: ExtensionAdapter) {
         this.adapter = adapter;
         this.changeListenerCount = 0;
+        this.changeDevToolsListenerCount = 0;
 
         chrome.runtime.onMessage.addListener((message, sender, sendResponse) => this.messageListener(message, sender, sendResponse));
 
@@ -45,15 +48,19 @@ export default class Messenger {
             this.onUIMessage(message, sendResponse);
             return ([
                 MessageType.UI_GET_DATA,
+                MessageType.UI_GET_DEVTOOLS_DATA,
             ].includes(message.type));
         }
     }
 
     private static firefoxPortListener(port: chrome.runtime.Port) {
-        let promise: Promise<ExtensionData | TabInfo>;
+        let promise: Promise<ExtensionData | DevToolsData | TabInfo>;
         switch (port.name) {
             case MessageType.UI_GET_DATA:
                 promise = this.adapter.collect();
+                break;
+            case MessageType.UI_GET_DEVTOOLS_DATA:
+                promise = this.adapter.collectDevTools();
                 break;
             // These types require data, so we need to add a listener to the port.
             case MessageType.UI_APPLY_DEV_DYNAMIC_THEME_FIXES:
@@ -91,16 +98,25 @@ export default class Messenger {
             .catch((error) => port.postMessage({error}));
     }
 
-    private static onUIMessage({type, data}: Message, sendResponse: (response: {data?: ExtensionData | TabInfo; error?: string}) => void) {
+    private static onUIMessage({type, data}: Message, sendResponse: (response: {data?: ExtensionData | DevToolsData | TabInfo; error?: string}) => void) {
         switch (type) {
             case MessageType.UI_GET_DATA:
                 this.adapter.collect().then((data) => sendResponse({data}));
+                break;
+            case MessageType.UI_GET_DEVTOOLS_DATA:
+                this.adapter.collectDevTools().then((data) => sendResponse({data}));
                 break;
             case MessageType.UI_SUBSCRIBE_TO_CHANGES:
                 this.changeListenerCount++;
                 break;
             case MessageType.UI_UNSUBSCRIBE_FROM_CHANGES:
                 this.changeListenerCount--;
+                break;
+            case MessageType.UI_SUBSCRIBE_TO_DEVTOOLS_CHANGES:
+                this.changeDevToolsListenerCount++;
+                break;
+            case MessageType.UI_UNSUBSCRIBE_FROM_DEVTOOLS_CHANGES:
+                this.changeDevToolsListenerCount--;
                 break;
             case MessageType.UI_CHANGE_SETTINGS:
                 this.adapter.changeSettings(data);
@@ -152,12 +168,25 @@ export default class Messenger {
         }
     }
 
-    static reportChanges(data: ExtensionData) {
+    static reportChanges(collectData: () => Promise<ExtensionData>) {
         if (this.changeListenerCount > 0) {
-            chrome.runtime.sendMessage<Message>({
-                type: MessageType.BG_CHANGES,
-                data
+            collectData().then((data) => {
+                chrome.runtime.sendMessage<Message>({
+                    type: MessageType.BG_CHANGES,
+                    data,
+                });
             });
+        }
+    }
+
+    static reportDevToolsChanges(collectData: () => Promise<DevToolsData>) {
+        if (this.changeDevToolsListenerCount > 0) {
+            collectData().then((data) => {
+                chrome.runtime.sendMessage<Message>({
+                    type: MessageType.BG_DEVTOOLS_CHANGES,
+                    data
+                });
+            })
         }
     }
 }

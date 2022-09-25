@@ -4,13 +4,13 @@ import {withState, useState} from 'malevic/state';
 import {Button, MessageBox, Overlay} from '../../controls';
 import {ThemeEngine} from '../../../generators/theme-engines';
 import {DEVTOOLS_DOCS_URL} from '../../../utils/links';
-import type {ExtWrapper} from '../../../definitions';
+import type {DevToolsWrapper} from '../../../definitions';
 import {getCurrentThemePreset} from '../../popup/theme/utils';
 import {isFirefox} from '../../../utils/platform';
 
-type BodyProps = ExtWrapper;
+type BodyProps = DevToolsWrapper;
 
-function Body({data, actions}: BodyProps) {
+function Body({data, devtools, actions}: BodyProps) {
     const context = getContext();
     const {state, setState} = useState({errorText: null as string});
     let textNode: HTMLTextAreaElement;
@@ -20,17 +20,17 @@ function Body({data, actions}: BodyProps) {
     const wrapper = (theme.engine === ThemeEngine.staticTheme
         ? {
             header: 'Static Theme Editor',
-            fixesText: data.devtools.staticThemesText,
+            fixesText: devtools.staticThemesText,
             apply: (text: string) => actions.applyDevStaticThemes(text),
             reset: () => actions.resetDevStaticThemes(),
         } : theme.engine === ThemeEngine.cssFilter || theme.engine === ThemeEngine.svgFilter ? {
             header: 'Inversion Fix Editor',
-            fixesText: data.devtools.filterFixesText,
+            fixesText: devtools.filterFixesText,
             apply: (text: string) => actions.applyDevInversionFixes(text),
             reset: () => actions.resetDevInversionFixes(),
         } : {
             header: 'Dynamic Theme Editor',
-            fixesText: data.devtools.dynamicFixesText,
+            fixesText: devtools.dynamicFixesText,
             apply: (text: string) => actions.applyDevDynamicThemeFixes(text),
             reset: () => actions.resetDevDynamicThemeFixes(),
         });

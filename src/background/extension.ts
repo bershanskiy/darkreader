@@ -15,7 +15,7 @@ import createCSSFilterStylesheet from '../generators/css-filter';
 import {getDynamicThemeFixesFor} from '../generators/dynamic-theme';
 import createStaticStylesheet from '../generators/static-theme';
 import {createSVGFilterStylesheet, getSVGFilterMatrixValue, getSVGReverseFilterMatrixValue} from '../generators/svg-filter';
-import type {ExtensionData, FilterConfig, Shortcuts, UserSettings, TabInfo, TabData, Command} from '../definitions';
+import type {ExtensionData, FilterConfig, Shortcuts, UserSettings, TabInfo, TabData, Command, DevToolsData} from '../definitions';
 import {isSystemDarkModeEnabled, runColorSchemeChangeDetector} from '../utils/media-query';
 import {isFirefox} from '../utils/platform';
 import {MessageType} from '../utils/message';
@@ -237,6 +237,9 @@ export class Extension {
             collect: async () => {
                 return await this.collectData();
             },
+            collectDevTools: async () => {
+                return await this.collectDevToolsData();
+            },
             changeSettings: (settings) => this.changeSettings(settings),
             setTheme: (theme) => this.setTheme(theme),
             setShortcut: ({command, shortcut}) => this.setShortcut(command, shortcut),
@@ -341,17 +344,11 @@ export class Extension {
         const [
             news,
             shortcuts,
-            dynamicFixesText,
-            filterFixesText,
-            staticThemesText,
-            activeTab
+            activeTab,
         ] = await Promise.all([
             Newsmaker.getLatest(),
             this.getShortcuts(),
-            DevTools.getDynamicThemeFixesText(),
-            DevTools.getInversionFixesText(),
-            DevTools.getStaticThemesText(),
-            this.getActiveTabInfo()
+            this.getActiveTabInfo(),
         ]);
         return {
             isEnabled: this.isExtensionSwitchedOn(),
@@ -361,12 +358,25 @@ export class Extension {
             shortcuts,
             colorScheme: ConfigManager.COLOR_SCHEMES_RAW,
             forcedScheme: this.autoState === 'scheme-dark' ? 'dark' : this.autoState === 'scheme-light' ? 'light' : null,
-            devtools: {
-                dynamicFixesText,
-                filterFixesText,
-                staticThemesText,
-            },
             activeTab,
+        };
+    }
+
+    static async collectDevToolsData(): Promise<DevToolsData> {
+        await this.loadData();
+        const [
+            dynamicFixesText,
+            filterFixesText,
+            staticThemesText,
+        ] = await Promise.all([
+            DevTools.getDynamicThemeFixesText(),
+            DevTools.getInversionFixesText(),
+            DevTools.getStaticThemesText(),
+        ]);
+        return {
+            dynamicFixesText,
+            filterFixesText,
+            staticThemesText,
         };
     }
 
@@ -478,9 +488,9 @@ export class Extension {
         this.onSettingsChanged();
     }
 
-    private static async reportChanges() {
-        const info = await this.collectData();
-        Messenger.reportChanges(info);
+    private static reportChanges() {
+        Messenger.reportChanges(async () => this.collectData());
+        Messenger.reportDevToolsChanges(async () => this.collectDevToolsData());
     }
 
     private static async toggleActiveTab() {
