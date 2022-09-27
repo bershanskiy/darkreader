@@ -6,7 +6,7 @@ import {cmd} from 'web-ext';
 import {WebSocketServer} from 'ws';
 import {generateHTMLCoverageReports} from './coverage.js';
 import {getChromePath, getFirefoxPath, chromeExtensionDebugDir, chromeMV3ExtensionDebugDir, firefoxExtensionDebugDir} from './paths.js';
-import {createTestServer} from './server.js';
+import {createTestServer} from '../support/server.js';
 
 const TEST_SERVER_PORT = 8891;
 const CORS_SERVER_PORT = 8892;

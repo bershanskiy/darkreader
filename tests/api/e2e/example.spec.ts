@@ -1,4 +1,21 @@
 import { test, expect } from '@playwright/test';
+import {createTestServer} from '../../support/server.js';
+
+interface TestServer {
+    setPaths: any;
+    close: () => Promise<void>;
+    url: string;
+}
+
+let server: TestServer | null = null;
+
+test.beforeAll(async () => {
+    server = await createTestServer();
+});
+
+test.afterAll(async () => {
+    await server?.close();
+})
 
 test('homepage has Playwright in title and get started link linking to the intro page', async ({ page }) => {
   await page.goto('https://playwright.dev/');

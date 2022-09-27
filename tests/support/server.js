@@ -16,7 +16,7 @@ const mimeTypes = new Map(
 );
 
 export async function createTestServer(/** @type {number} */port) {
-    /** @type {import('http').Server} */
+    /** @type {import('http').Server | null} */
     let server;
     /** @type {{[path: string]: string | import('http').RequestListener}} */
     const paths = {};
@@ -25,7 +25,10 @@ export async function createTestServer(/** @type {number} */port) {
 
     /** @type {import('http').RequestListener} */
     function handleRequest(req, res) {
-        const parsedURL = url.parse(req.url);
+        if (!req.url) {
+            throw new Error('Invalid request, make sure handleRequest() is passed ');
+        }
+        const parsedURL = new URL(req.url);
         const pathName = parsedURL.pathname;
 
         if (!paths.hasOwnProperty(pathName)) {
@@ -78,10 +81,10 @@ export async function createTestServer(/** @type {number} */port) {
      */
     function close() {
         if (!server) {
-            return;
+            return Promise.resolve();
         }
         return new Promise((resolve) => {
-            server.close((err) => {
+            server && server.close((err) => {
                 if (err) {
                     console.error(err);
                 }
