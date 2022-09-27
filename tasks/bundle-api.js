@@ -13,14 +13,14 @@ import paths from './paths.js';
 const {rootDir, rootPath} = paths;
 
 async function getVersion() {
-    const file = await fs.promises.readFile(new URL('../package.json', import.meta.url));
+    const file = await fs.promises.readFile(new URL('../package.json', import.meta.url), {encoding: 'utf8'});
     const p = JSON.parse(file);
     return p.version;
 }
 
 let watchFiles = [];
 
-async function bundleAPI({debug, watch}) {
+async function bundleAPI({debug, log, watch, test}) {
     const src = rootPath('src/api/index.ts');
     const dest = 'darkreader.js';
     const bundle = await rollup.rollup({
@@ -40,12 +40,14 @@ async function bundleAPI({debug, watch}) {
             }),
             rollupPluginReplace({
                 preventAssignment: true,
-                __DEBUG__: false,
+                __DEBUG__: debug,
                 __CHROMIUM_MV2__: false,
                 __CHROMIUM_MV3__: false,
                 __FIREFOX__: false,
                 __THUNDERBIRD__: false,
-                __TEST__: false,
+                __TEST__: test,
+                __WATCH__: watch,
+                __LOG__: log ? `"${log}"` : 'false',
             }),
         ].filter((x) => x)
     });
@@ -69,7 +71,7 @@ const bundleAPITask = createTask(
     },
     async (changedFiles, watcher) => {
         const oldWatchFiles = watchFiles;
-        await bundleAPI({debug: true, watch: true});
+        await bundleAPI({debug: true, log: false, watch: true, test: false});
 
         watcher.unwatch(
             oldWatchFiles.filter((oldFile) => !watchFiles.includes(oldFile))

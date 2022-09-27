@@ -52,14 +52,14 @@ async function build({platforms, debug, watch, log: logging, test}) {
     }
 }
 
-async function api(debug, watch) {
+async function api({debug, watch, log: logging, test}) {
     log.ok('API');
     try {
         const tasks = [bundleAPI];
         if (!debug) {
             tasks.push(codeStyle);
         }
-        await runTasks(tasks, {platforms: {[PLATFORM.API]: true}, debug, watch, log: false, test: false});
+        await runTasks(tasks, {platforms: {[PLATFORM.API]: true}, debug, watch, log: logging, test});
         if (watch) {
             bundleAPI.watch();
             log.ok('Watching...');
@@ -111,14 +111,16 @@ async function run() {
     const watch = args.includes('--watch');
     const logInfo = watch && args.includes('--log-info');
     const logWarn = watch && args.includes('--log-warn');
+    const logging = logWarn ? 'warn' : (logInfo ? 'info' : null);
+    const test = args.includes('--test');
     if (release && Object.values(platforms).some(Boolean)) {
         await build({platforms, debug: false, watch: false, log: null, test: false});
     }
     if (debug && Object.values(platforms).some(Boolean)) {
-        await build({platforms, debug, watch, log: logWarn ? 'warn' : (logInfo ? 'info' : null), test: args.includes('--test')});
+        await build({platforms, debug, watch, log: logging, test});
     }
     if (args.includes('--api')) {
-        await api(debug, watch);
+        await api({debug, watch, log: false, test});
     }
 }
 
