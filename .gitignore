@@ -29,3 +29,9 @@ coverage/
 # V8 Profiler logs
 #-----------------------------------
 isolate-*-v8.log
+
+# Playwright tests
+#-----------------------------------
+/test-results/
+/playwright-report/
+/playwright/.cache/
