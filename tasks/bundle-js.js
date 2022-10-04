@@ -21,14 +21,15 @@ const {getDestDir, PLATFORM, rootDir, rootPath} = paths;
  * @property {string | ((platform: string) => string)} dest
  * @property {string} reloadType
  * @property {string[]} [watchFiles]
- * @property {(typeof PLATFORM.CHROME) | undefined} [platform]
+ * @property {(typeof PLATFORM.CHROME)[] | undefined} [platforms]
  */
 
 /** @type {JSEntry[]} */
 const jsEntries = [
     {
         src: 'src/background/index.ts',
-        // Prior to Chrome 93, background service worker had to be in top-level directory
+        // Prior to Chrome 93, background service worker had to be in top-level directory.
+        // We keep it there for nicety of folder layout.
         dest: (platform) => platform === PLATFORM.CHROME_MV3 ? 'background.js' : 'background/index.js',
         reloadType: reload.FULL,
     },
@@ -38,10 +39,22 @@ const jsEntries = [
         reloadType: reload.FULL,
     },
     {
+        src: 'src/inject/dynamic-theme/mv2-proxy.ts',
+        dest: 'inject/proxy.js',
+        reloadType: reload.FULL,
+        platforms: [
+            PLATFORM.CHROME,
+            PLATFORM.FIREFOX,
+            PLATFORM.THUNDERBIRD
+        ],
+    },
+    {
         src: 'src/inject/dynamic-theme/mv3-proxy.ts',
         dest: 'inject/proxy.js',
         reloadType: reload.FULL,
-        platform: PLATFORM.CHROME_MV3,
+        platforms: [
+            PLATFORM.CHROME_MV3
+        ],
     },
     {
         src: 'src/inject/fallback.ts',
@@ -52,7 +65,7 @@ const jsEntries = [
         src: 'src/inject/color-scheme-watcher.ts',
         dest: 'inject/color-scheme-watcher.js',
         reloadType: reload.FULL,
-        platform: PLATFORM.CHROME_MV3,
+        platforms: [PLATFORM.CHROME_MV3],
     },
     {
         src: 'src/ui/devtools/index.tsx',
@@ -155,6 +168,7 @@ async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log
                     preventAssignment: true,
                     ...replace,
                     __DEBUG__: debug,
+                    __API__: platform === PLATFORM.API,
                     __CHROMIUM_MV2__: platform === PLATFORM.CHROME,
                     __CHROMIUM_MV3__: platform === PLATFORM.CHROME_MV3,
                     __FIREFOX__: platform === PLATFORM.FIREFOX,
@@ -192,7 +206,7 @@ let watchFiles;
 
 const hydrateTask = (/** @type {JSEntry[]} */entries, platforms, /** @type {boolean} */debug, /** @type {boolean} */watch, log, test) =>
     entries.map((entry) =>
-        (entry.platform ? [entry.platform] : Object.values(PLATFORM).filter((platform) => platform !== PLATFORM.API))
+        (entry.platforms ? entry.platforms : Object.values(PLATFORM).filter((platform) => platform !== PLATFORM.API))
             .filter((platform) => platforms[platform])
             .map((platform) => bundleJS(entry, platform, debug, watch, log, test))
     ).flat();

@@ -41,6 +41,7 @@ async function bundleAPI({debug, watch}) {
             }),
             rollupPluginReplace({
                 preventAssignment: true,
+                __API__: true,
                 __DEBUG__: false,
                 __CHROMIUM_MV2__: false,
                 __CHROMIUM_MV3__: false,
