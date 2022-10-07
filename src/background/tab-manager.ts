@@ -12,6 +12,7 @@ import {makeFirefoxHappy} from './make-firefox-happy';
 
 declare const __CHROMIUM_MV3__: boolean;
 declare const __THUNDERBIRD__: boolean;
+declare const __SAFARI_MV3__: boolean;
 
 interface TabManagerOptions {
     getConnectionMessage: (tabURl: string, url: string, isTopFrame: boolean) => Promise<Message>;
@@ -176,7 +177,7 @@ export default class TabManager {
                     break;
 
                 case MessageType.UI_SAVE_FILE: {
-                    if (__CHROMIUM_MV3__) {
+                    if (__CHROMIUM_MV3__ || __SAFARI_MV3__) {
                         break;
                     }
                     const {content, name} = message.data;
@@ -239,7 +240,7 @@ export default class TabManager {
     }
 
     private static async getTabURL(tab: chrome.tabs.Tab): Promise<string> {
-        if (__CHROMIUM_MV3__) {
+        if (__CHROMIUM_MV3__ || __SAFARI_MV3__) {
             try {
                 if (this.tabs[tab.id!] && this.tabs[tab.id!][0]) {
                     return this.tabs[tab.id!][0].url || 'about:blank';
@@ -263,11 +264,11 @@ export default class TabManager {
 
     static async updateContentScript(options: {runOnProtectedPages: boolean}) {
         (await this.queryTabs())
-            .filter((tab) => __CHROMIUM_MV3__ || options.runOnProtectedPages || canInjectScript(tab.url))
+            .filter((tab) => __CHROMIUM_MV3__ || __SAFARI_MV3__ || options.runOnProtectedPages || canInjectScript(tab.url))
             .filter((tab) => !Boolean(this.tabs[tab.id!]))
             .forEach((tab) => {
                 if (!tab.discarded) {
-                    if (__CHROMIUM_MV3__) {
+                    if (__CHROMIUM_MV3__ || __SAFARI_MV3__) {
                         chrome.scripting.executeScript({
                             target: {
                                 tabId: tab.id!,

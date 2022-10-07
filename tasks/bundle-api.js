@@ -47,6 +47,7 @@ async function bundleAPI({debug, watch}) {
                 __CHROMIUM_MV3__: false,
                 __FIREFOX__: false,
                 __THUNDERBIRD__: false,
+                __SAFARI_MV3__: false,
                 __TEST__: false,
             }),
         ].filter((x) => x)

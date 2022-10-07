@@ -13,6 +13,7 @@ import {isChromium} from '../../../../utils/platform';
 import {HOMEPAGE_URL} from '../../../../utils/links';
 
 declare const __CHROMIUM_MV3__: boolean;
+declare const __SAFARI_MV3__: boolean;
 
 function multiline(...lines: string[]) {
     return lines.join('\n');
@@ -47,7 +48,7 @@ function Header({data, actions, onMoreToggleSettingsClick}: HeaderProps) {
                     data={data}
                     actions={actions}
                 />
-                {!isFile && ((!__CHROMIUM_MV3__ && !tab.isInjected) || tab.isProtected) ? (
+                {!isFile && ((!(__CHROMIUM_MV3__ || __SAFARI_MV3__) && !tab.isInjected) || tab.isProtected) ? (
                     <span class="header__site-toggle__unable-text">
                         {getLocalMessage('page_protected')}
                     </span>

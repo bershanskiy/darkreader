@@ -3,6 +3,7 @@ import {isFirefox, isMobile} from '../utils/platform';
 import type {Message} from '../definitions';
 
 declare const __CHROMIUM_MV3__: boolean;
+declare const __SAFARI_MV3__: boolean;
 
 export function classes(...args: Array<string | {[cls: string]: boolean}>) {
     const classes: string[] = [];
@@ -40,7 +41,7 @@ export function openFile(options: {extensions: string[]}, callback: (content: st
 }
 
 export function saveFile(name: string, content: string) {
-    if (__CHROMIUM_MV3__ || isFirefox || isMobile) {
+    if (__CHROMIUM_MV3__ || __SAFARI_MV3__ || isFirefox || isMobile) {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([content]));
         a.download = name;
@@ -178,7 +179,7 @@ async function getExtensionPageTabMV3(): Promise<chrome.tabs.Tab | null> {
 }
 
 async function getExtensionPageTab(url: string): Promise<chrome.tabs.Tab | null> {
-    if (__CHROMIUM_MV3__) {
+    if (__CHROMIUM_MV3__ || __SAFARI_MV3__) {
         return getExtensionPageTabMV3();
     }
     return new Promise<chrome.tabs.Tab>((resolve) => {

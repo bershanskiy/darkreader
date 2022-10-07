@@ -10,6 +10,7 @@ import {compareChromeVersions, chromiumVersion, isFirefox, firefoxVersion} from 
 
 declare const __CHROMIUM_MV2__: boolean;
 declare const __CHROMIUM_MV3__: boolean;
+declare const __SAFARI_MV3__: boolean;
 
 export enum FilterMode {
     light = 0,
@@ -24,7 +25,7 @@ export enum FilterMode {
  * Patch: https://chromium-review.googlesource.com/c/chromium/src/+/1979258
  */
 export function hasPatchForChromiumIssue501582() {
-    return __CHROMIUM_MV3__ || Boolean(
+    return __CHROMIUM_MV3__ || __SAFARI_MV3__ || Boolean(
         __CHROMIUM_MV2__ &&
         compareChromeVersions(chromiumVersion, '81.0.4035.0') >= 0
     );

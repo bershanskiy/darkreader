@@ -1,0 +1,59 @@
+{
+    "manifest_version": 3,
+    "action": {
+        "default_title": "Dark Reader for Safari",
+        "default_icon": {
+            "38": "icons/dr_active_38.png",
+            "19": "icons/dr_active_19.png"
+        },
+        "default_popup": "ui/popup/index.html"
+    },
+    "name": "Test extension",
+    "options_ui": {
+        "page": "ui/popup/index.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://example.com/doesNotExist"
+            ],
+            "js": [
+                "inject/fallback.js",
+                "inject/index.js"
+            ],
+            "run_at": "document_start",
+            "all_frames": true,
+            "match_about_blank": true
+        },
+        {
+            "matches": [
+                "*://*/*"
+            ],
+            "js": [
+                "inject/color-scheme-watcher.js"
+            ],
+            "run_at": "document_idle",
+            "all_frames": false,
+            "match_about_blank": false
+        }
+    ],
+    "permissions": [
+        "alarms",
+        "fontSettings",
+        "scripting",
+        "storage",
+        "unlimitedStorage"
+    ],
+    "host_permissions": [
+        "*://*/*"
+    ],
+    "web_accessible_resources": [
+        {
+            "matches": ["*://*/*"],
+            "resources": ["inject/proxy.js"]
+        }
+    ]
+}

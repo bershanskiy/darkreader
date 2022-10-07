@@ -94,15 +94,16 @@ async function run() {
         return executeChildProcess(args);
     }
 
-    const validArgs = ['--api', '--chrome', '--chrome-mv3', '--firefox', '--thunderbird', '--release', '--debug', '--watch', '--log-info', '--log-warn', '--test'];
+    const validArgs = ['--api', '--chrome', '--chrome-mv3', '--firefox', '--thunderbird', '--safari', '--release', '--debug', '--watch', '--log-info', '--log-warn', '--test'];
     args.filter((arg) => !validArgs.includes(arg)).forEach((arg) => log.warn(`Unknown argument ${arg}`));
 
-    const allPlatforms = !(args.includes('--api') || args.includes('--chrome') || args.includes('--chrome-mv3') || args.includes('--firefox') || args.includes('--thunderbird'));
+    const allPlatforms = !(args.includes('--api') || args.includes('--chrome') || args.includes('--chrome-mv3') || args.includes('--firefox') || args.includes('--thunderbird') || args.includes('--safari'));
     const platforms = {
         [PLATFORM.CHROME]: allPlatforms || args.includes('--chrome'),
         [PLATFORM.CHROME_MV3]: allPlatforms || args.includes('--chrome-mv3'),
         [PLATFORM.FIREFOX]: allPlatforms || args.includes('--firefox'),
         [PLATFORM.THUNDERBIRD]: allPlatforms || args.includes('--thunderbird'),
+        [PLATFORM.SAFARI_MV3]: allPlatforms || args.includes('--safari'),
     };
 
 

@@ -30,7 +30,7 @@ const jsEntries = [
         src: 'src/background/index.ts',
         // Prior to Chrome 93, background service worker had to be in top-level directory.
         // We keep it there for nicety of folder layout.
-        dest: (platform) => platform === PLATFORM.CHROME_MV3 ? 'background.js' : 'background/index.js',
+        dest: (platform) => (platform === PLATFORM.CHROME_MV3 || platform === PLATFORM.SAFARI_MV3) ? 'background.js' : 'background/index.js',
         reloadType: reload.FULL,
     },
     {
@@ -173,6 +173,7 @@ async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log
                     __CHROMIUM_MV3__: platform === PLATFORM.CHROME_MV3,
                     __FIREFOX__: platform === PLATFORM.FIREFOX,
                     __THUNDERBIRD__: platform === PLATFORM.THUNDERBIRD,
+                    __SAFARI_MV3__: platform === PLATFORM.SAFARI_MV3,
                     __PORT__: watch ? String(PORT) : '-1',
                     __TEST__: test,
                     __WATCH__: watch,

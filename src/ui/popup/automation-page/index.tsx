@@ -10,6 +10,8 @@ import {AutomationMode} from '../../../utils/automation';
 import {isMatchMediaChangeEventListenerBuggy} from '../../../utils/platform';
 
 declare const __CHROMIUM_MV3__: boolean;
+declare const __SAFARI_MV3__: boolean;
+declare const __TEST__: boolean;
 
 export default function AutomationPage(props: ViewProps) {
     const isSystemAutomation = props.data.settings.automation.mode === AutomationMode.SYSTEM;
@@ -143,7 +145,7 @@ export default function AutomationPage(props: ViewProps) {
                         'automation-page__system-dark-mode__button--active': isSystemAutomation,
                     }}
                     onclick={() => {
-                        if (__CHROMIUM_MV3__) {
+                        if (__CHROMIUM_MV3__ || __SAFARI_MV3__) {
                             chrome.runtime.sendMessage<Message>({
                                 type: MessageType.UI_COLOR_SCHEME_CHANGE,
                                 data: {isDark: matchMedia('(prefers-color-scheme: dark)').matches}

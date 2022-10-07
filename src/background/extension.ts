@@ -41,6 +41,7 @@ interface SystemColorState extends Record<string, unknown> {
 declare const __CHROMIUM_MV2__: boolean;
 declare const __CHROMIUM_MV3__: boolean;
 declare const __THUNDERBIRD__: boolean;
+declare const __SAFARI_MV3__: boolean;
 
 export class Extension {
     private static autoState: AutomationState = '';
@@ -113,7 +114,7 @@ export class Extension {
     }
 
     private static async MV3syncSystemColorStateManager(isDark: boolean | null): Promise<void> {
-        if (!__CHROMIUM_MV3__) {
+        if (!__CHROMIUM_MV3__ && !__SAFARI_MV3__) {
             return;
         }
         if (!this.systemColorStateManager) {
@@ -158,7 +159,7 @@ export class Extension {
                 break;
             }
             case AutomationMode.SYSTEM:
-                if (__CHROMIUM_MV3__) {
+                if (__CHROMIUM_MV3__ || __SAFARI_MV3__) {
                     isAutoDark = this.wasLastColorSchemeDark;
                     if (this.wasLastColorSchemeDark === null) {
                         logWarn('System color scheme is unknown. Defaulting to Dark.');
@@ -241,7 +242,9 @@ export class Extension {
     private static getMessengerAdapter(): ExtensionAdapter {
         return {
             collect: async () => {
-                return await this.collectData();
+                const data = await this.collectData();
+                console.error(data)
+                return data;
             },
             collectDevToolsData: async () => {
                 return await this.collectDevToolsData();
@@ -562,6 +565,7 @@ export class Extension {
     //
 
     private static onAppToggle() {
+        console.error('__CHROMIUM_MV3__', __CHROMIUM_MV3__);
         if (this.isExtensionSwitchedOn()) {
             if (__CHROMIUM_MV3__) {
                 ContentScriptManager.registerScripts(async () => TabManager.updateContentScript({runOnProtectedPages: UserStorage.settings.enableForProtectedPages}));

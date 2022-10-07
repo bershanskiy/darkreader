@@ -2,9 +2,10 @@ import {compareChromeVersions, chromiumVersion, isWindows, isOpera, isYaBrowser,
 
 declare const __THUNDERBIRD__: boolean;
 declare const __CHROMIUM_MV3__: boolean;
+declare const __SAFARI_MV3__: boolean;
 
 export function popupHasBuiltInBorders() {
-    return !__CHROMIUM_MV3__ && Boolean(
+    return !__CHROMIUM_MV3__ && !__SAFARI_MV3__ && Boolean(
         chromiumVersion &&
         !isVivaldi &&
         !isYaBrowser &&
@@ -15,7 +16,7 @@ export function popupHasBuiltInBorders() {
 }
 
 export function popupHasBuiltInHorizontalBorders() {
-    return !__CHROMIUM_MV3__ && Boolean(
+    return !__CHROMIUM_MV3__ && !__SAFARI_MV3__ && Boolean(
         chromiumVersion &&
         !isVivaldi &&
         !isYaBrowser &&

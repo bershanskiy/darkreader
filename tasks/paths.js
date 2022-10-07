@@ -10,6 +10,7 @@ export default {
         CHROME_MV3: 'chrome-mv3',
         FIREFOX: 'firefox',
         THUNDERBIRD: 'thunderbird',
+        SAFARI_MV3: 'safari',
     },
     getDestDir: function ({debug, platform}) {
         const buildTypeDir = `build/${debug ? 'debug' : 'release'}`;

@@ -45,6 +45,9 @@ export default class Messenger {
             chrome.runtime.getURL('/ui/devtools/index.html'),
             chrome.runtime.getURL('/ui/stylesheet-editor/index.html')
         ];
+        if (chrome.runtime.getURL('').startsWith('safari-web-extension://')) {
+            allowedSenderURL.push(undefined);
+        }
         if (allowedSenderURL.includes(sender.url!)) {
             this.onUIMessage(message, sendResponse);
             return ([
