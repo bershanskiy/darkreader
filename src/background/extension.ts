@@ -565,7 +565,6 @@ export class Extension {
     //
 
     private static onAppToggle() {
-        console.error('__CHROMIUM_MV3__', __CHROMIUM_MV3__);
         if (this.isExtensionSwitchedOn()) {
             if (__CHROMIUM_MV3__) {
                 ContentScriptManager.registerScripts(async () => TabManager.updateContentScript({runOnProtectedPages: UserStorage.settings.enableForProtectedPages}));

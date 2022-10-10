@@ -1,14 +1,14 @@
 {
     "manifest_version": 3,
     "action": {
-        "default_title": "Dark Reader for Safari",
+        "default_title": "Dark Reader",
         "default_icon": {
             "38": "icons/dr_active_38.png",
             "19": "icons/dr_active_19.png"
         },
         "default_popup": "ui/popup/index.html"
     },
-    "name": "Test extension",
+    "name": "Dark Reader for Safari (unoficcial experimental version)",
     "options_ui": {
         "page": "ui/popup/index.html"
     },

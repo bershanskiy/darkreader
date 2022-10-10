@@ -129,6 +129,8 @@ async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log
             };
             break;
         case PLATFORM.CHROME_MV3:
+            // fallthrough
+        case PLATFORM.SAFARI_MV3:
             replace = {
                 'chrome.browserAction.setIcon': 'chrome.action.setIcon',
                 'chrome.browserAction.setBadgeBackgroundColor': 'chrome.action.setBadgeBackgroundColor',

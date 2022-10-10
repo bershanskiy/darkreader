@@ -29,3 +29,7 @@ coverage/
 # V8 Profiler logs
 #-----------------------------------
 isolate-*-v8.log
+
+# MacOS
+#-----------------------------------
+.DS_Store
