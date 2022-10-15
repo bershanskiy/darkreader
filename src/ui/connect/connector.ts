@@ -23,6 +23,9 @@ export default class Connector implements ExtensionActions {
 
     private async firefoxSendRequestWithResponse<T>(type: MessageType, data?: string) {
         return new Promise<T>((resolve, reject) => {
+            if (!data) {
+                reject('No data to send');
+            }
             const dataPort = chrome.runtime.connect({name: type});
             dataPort.onDisconnect.addListener(() => reject());
             dataPort.onMessage.addListener(({data, error}) => {
@@ -33,7 +36,7 @@ export default class Connector implements ExtensionActions {
                 }
                 dataPort.disconnect();
             });
-            data && dataPort.postMessage({data});
+            dataPort.postMessage({data});
         });
     }
 

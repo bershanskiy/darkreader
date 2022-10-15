@@ -7,8 +7,18 @@ import {isSystemDarkModeEnabled, runColorSchemeChangeDetector, stopColorSchemeCh
 import {collectCSS} from './dynamic-theme/css-collection';
 import type {Message} from '../definitions';
 import {MessageType} from '../utils/message';
+import {isFirefox, isOpera, isVivaldi} from '../utils/platform';
+import {generateUID} from '../utils/uid';
 
 let unloaded = false;
+let frameId: number;
+if (isFirefox || isVivaldi || isOpera) {
+    if (window.self === window.top) {
+        // This is the top frame
+        frameId = 0;
+    }
+    frameId = Math.floor(Math.random()*10**15);
+}
 
 declare const __CHROMIUM_MV3__: boolean;
 declare const __THUNDERBIRD__: boolean;
@@ -27,6 +37,8 @@ function sendMessage(message: Message) {
     if (unloaded) {
         return;
     }
+    message.frameId = frameId;
+    message.data.url = document.location.href;
     const responseHandler = (response: 'unsupportedSender' | undefined) => {
         // Vivaldi bug workaround. See TabManager for details.
         if (response === 'unsupportedSender') {

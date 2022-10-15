@@ -132,6 +132,7 @@ export interface TabInfo {
 
 export interface Message {
     type: MessageType;
+    frameId?: number;
     data?: any;
     id?: number;
     error?: any;

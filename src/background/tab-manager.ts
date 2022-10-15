@@ -49,7 +49,7 @@ export default class TabManager {
     private static stateManager: StateManager<TabManagerState>;
     private static fileLoader: {get: (params: FetchRequestParameters) => Promise<string>} = null;
     private static getTabMessage: (url: string, isTopFrame: boolean) => Message;
-    private static timestamp: number = null;
+    private static timestamp: number = 0;
     private static LOCAL_STORAGE_KEY = 'TabManager-state';
 
     static init({getConnectionMessage, onColorSchemeChange, getTabMessage}: TabManagerOptions) {
@@ -87,10 +87,16 @@ export default class TabManager {
                         return;
                     }
 
-                    const tabId = sender.tab.id;
-                    const {frameId} = sender;
-                    const url = sender.url;
-
+                    let tabId: number, frameId: number, url: string, tabURL: string;
+                    if (sender) {
+                        tabId = sender.tab.id;
+                        frameId = sender.frameId;
+                        url = sender.url;
+                    } else {
+                        tabId = -1;
+                        frameId = message.frameId;
+                        url = message.data.url;
+                    }
                     this.addFrame(tabId, frameId, url, this.timestamp);
 
                     reply(url, frameId === 0);
@@ -113,8 +119,8 @@ export default class TabManager {
                     break;
                 }
                 case MessageType.CS_FRAME_RESUME: {
-                    onColorSchemeChange(message.data.isDark);
                     await this.stateManager.loadState();
+                    onColorSchemeChange(message.data.isDark);
                     const tabId = sender.tab.id;
                     const frameId = sender.frameId;
                     const url = sender.url;
@@ -123,7 +129,7 @@ export default class TabManager {
                         chrome.tabs.sendMessage<Message>(tabId, message, {frameId});
                     }
                     this.tabs[sender.tab.id][sender.frameId] = {
-                        url: sender.url,
+                        url: frameURL,
                         state: DocumentState.ACTIVE,
                         timestamp: this.timestamp,
                     };
