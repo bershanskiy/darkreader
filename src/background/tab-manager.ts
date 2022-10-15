@@ -129,7 +129,7 @@ export default class TabManager {
                         chrome.tabs.sendMessage<Message>(tabId, message, {frameId});
                     }
                     this.tabs[sender.tab.id][sender.frameId] = {
-                        url: frameURL,
+                        url: sender.url,
                         state: DocumentState.ACTIVE,
                         timestamp: this.timestamp,
                     };
