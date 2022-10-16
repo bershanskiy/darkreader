@@ -87,7 +87,7 @@ export default class TabManager {
                         return;
                     }
 
-                    let tabId: number, frameId: number, url: string, tabURL: string;
+                    let tabId: number, frameId: number, url: string;
                     if (sender) {
                         tabId = sender.tab.id;
                         frameId = sender.frameId;
@@ -97,7 +97,7 @@ export default class TabManager {
                         frameId = message.frameId;
                         url = message.data.url;
                     }
-                    this.addFrame(tabId, frameId, url, this.timestamp);
+                    this.addFrame(tabId, frameId, url);
 
                     reply(url, frameId === 0);
                     this.stateManager.saveState();
@@ -207,7 +207,7 @@ export default class TabManager {
         );
     }
 
-    private static addFrame(tabId: number, frameId: number, url: string, timestamp: number) {
+    private static addFrame(tabId: number, frameId: number, url: string) {
         let frames: {[frameId: number]: FrameInfo};
         if (this.tabs[tabId]) {
             frames = this.tabs[tabId];
@@ -218,7 +218,7 @@ export default class TabManager {
         frames[frameId] = {
             url,
             state: DocumentState.ACTIVE,
-            timestamp,
+            timestamp: this.timestamp,
         };
     }
 
