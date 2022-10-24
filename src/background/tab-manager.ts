@@ -14,13 +14,13 @@ declare const __CHROMIUM_MV3__: boolean;
 declare const __THUNDERBIRD__: boolean;
 
 interface TabManagerOptions {
-    getConnectionMessage: (tabURl: string, url: string, isTopFrame: boolean) => Promise<Message>;
-    getTabMessage: (tabURL: string, url: string, isTopFrame: boolean) => Message;
+    getConnectionMessage: (topOrigin: string, origin: string, isTopFrame: boolean) => Promise<Message>;
+    getTabMessage: (topOrigin: string, origin: string, isTopFrame: boolean) => Message;
     onColorSchemeChange: (isDark: boolean) => void;
 }
 
 interface FrameInfo {
-    url?: string;
+    origin?: string;
     state: DocumentState;
     timestamp: number;
     darkThemeDetected?: boolean;
@@ -49,7 +49,7 @@ export default class TabManager {
     private static tabs: {[tabId: number]: {[frameId: number]: FrameInfo}};
     private static stateManager: StateManager<TabManagerState>;
     private static fileLoader: {get: (params: FetchRequestParameters) => Promise<string>} = null;
-    private static getTabMessage: (tabURL: string, url: string, isTopFrame: boolean) => Message;
+    private static getTabMessage: (tabOrigin: string, origin: string, isTopFrame: boolean) => Message;
     private static timestamp: number = null;
     private static LOCAL_STORAGE_KEY = 'TabManager-state';
 
@@ -66,8 +66,8 @@ export default class TabManager {
                 case MessageType.CS_FRAME_CONNECT: {
                     onColorSchemeChange(message.data.isDark);
                     await this.stateManager.loadState();
-                    const reply = (tabURL: string, url: string, isTopFrame: boolean) => {
-                        getConnectionMessage(tabURL, url, isTopFrame).then((message) => {
+                    const reply = (topOrigin: string, origin: string, isTopFrame: boolean) => {
+                        getConnectionMessage(topOrigin, origin, isTopFrame).then((message) => {
                             message && chrome.tabs.sendMessage<Message>(sender.tab.id, message, {frameId: sender.frameId});
                         });
                     };
@@ -92,13 +92,13 @@ export default class TabManager {
                     }
 
                     const tabId = sender.tab.id;
-                    const tabURL = sender.tab.url;
+                    const topOrigin = this.getOrigin(sender.tab.url);
                     const {frameId} = sender;
-                    const url = sender.url;
+                    const origin = this.getOrigin(sender.url);
 
-                    this.addFrame(tabId, frameId, url, this.timestamp);
+                    this.addFrame(tabId, frameId, origin, this.timestamp);
 
-                    reply(tabURL, url, frameId === 0);
+                    reply(topOrigin, origin, frameId === 0);
                     this.stateManager.saveState();
                     break;
                 }
@@ -113,7 +113,6 @@ export default class TabManager {
                     await this.stateManager.loadState();
                     const info = this.tabs[sender.tab.id][sender.frameId];
                     info.state = DocumentState.FROZEN;
-                    info.url = null;
                     this.stateManager.saveState();
                     break;
                 }
@@ -121,15 +120,15 @@ export default class TabManager {
                     onColorSchemeChange(message.data.isDark);
                     await this.stateManager.loadState();
                     const tabId = sender.tab.id;
-                    const tabURL = sender.tab.url;
+                    const topOrigin = this.getOrigin(sender.tab.url);
                     const frameId = sender.frameId;
-                    const url = sender.url;
+                    const origin = this.getOrigin(sender.url);
                     if (this.tabs[tabId][frameId].timestamp < this.timestamp) {
-                        const message = this.getTabMessage(tabURL, url, frameId === 0);
+                        const message = this.getTabMessage(topOrigin, origin, frameId === 0);
                         chrome.tabs.sendMessage<Message>(tabId, message, {frameId});
                     }
                     this.tabs[sender.tab.id][sender.frameId] = {
-                        url: sender.url,
+                        origin,
                         state: DocumentState.ACTIVE,
                         timestamp: this.timestamp,
                     };
@@ -201,13 +200,17 @@ export default class TabManager {
         chrome.tabs.onRemoved.addListener(async (tabId) => this.removeFrame(tabId, 0));
     }
 
+    private static getOrigin(url: string) {
+        return (new URL(url)).origin;
+    }
+
     private static async queryTabs(query: chrome.tabs.QueryInfo = {}) {
         return new Promise<chrome.tabs.Tab[]>((resolve) =>
             chrome.tabs.query(query, resolve)
         );
     }
 
-    private static addFrame(tabId: number, frameId: number, url: string, timestamp: number) {
+    private static addFrame(tabId: number, frameId: number, origin: string, timestamp: number) {
         let frames: {[frameId: number]: FrameInfo};
         if (this.tabs[tabId]) {
             frames = this.tabs[tabId];
@@ -216,7 +219,7 @@ export default class TabManager {
             this.tabs[tabId] = frames;
         }
         frames[frameId] = {
-            url,
+            origin,
             state: DocumentState.ACTIVE,
             timestamp,
         };
@@ -238,18 +241,21 @@ export default class TabManager {
         this.stateManager.saveState();
     }
 
-    private static async getTabURL(tab: chrome.tabs.Tab): Promise<string> {
+    private static async getTabOrigin(tab: chrome.tabs.Tab): Promise<string> {
         if (__CHROMIUM_MV3__) {
             try {
                 if (this.tabs[tab.id] && this.tabs[tab.id][0]) {
-                    return this.tabs[tab.id][0].url || 'about:blank';
+                    return this.tabs[tab.id][0].origin || 'about:blank';
                 }
                 return (await chrome.scripting.executeScript({
                     target: {
                         tabId: tab.id,
                         frameIds: [0],
                     },
-                    func: () => window.location.href,
+                    func: () => {
+                        const url = window.location.href;
+                        return (new URL(url)).origin;
+                    }
                 }))[0].result;
             } catch (e) {
                 return 'about:blank';
@@ -258,6 +264,10 @@ export default class TabManager {
         // It can happen in cases whereby the tab.url is empty.
         // Luckily this only and will only happen on `about:blank`-like pages.
         // Due to this we can safely use `about:blank` as fallback value.
+        return this.getOrigin(tab.url) || 'about:blank';
+    }
+
+    private static getTabURL(tab: chrome.tabs.Tab) {
         return tab.url || 'about:blank';
     }
 
@@ -305,7 +315,7 @@ export default class TabManager {
     static async sendMessage(onlyUpdateActiveTab = false) {
         this.timestamp++;
 
-        const activeTabHostname = onlyUpdateActiveTab ? getURLHostOrProtocol(await this.getActiveTabURL()) : null;
+        const activeTabHostname = onlyUpdateActiveTab ? getURLHostOrProtocol(await this.getActiveTabOrigin()) : null;
 
         (await this.queryTabs())
             .filter((tab) => Boolean(this.tabs[tab.id]))
@@ -313,15 +323,15 @@ export default class TabManager {
                 const frames = this.tabs[tab.id];
                 Object.entries(frames)
                     .filter(([, {state}]) => state === DocumentState.ACTIVE || state === DocumentState.PASSIVE)
-                    .forEach(async ([id, {url}]) => {
+                    .forEach(async ([id, {origin}]) => {
                         const frameId = Number(id);
-                        const tabURL = await this.getTabURL(tab);
+                        const tabOrigin = await this.getTabOrigin(tab);
                         // Check if hostname are equal when we only want to update active tab.
-                        if (onlyUpdateActiveTab && getURLHostOrProtocol(tabURL) !== activeTabHostname) {
+                        if (onlyUpdateActiveTab && getURLHostOrProtocol(tabOrigin) !== activeTabHostname) {
                             return;
                         }
 
-                        const message = this.getTabMessage(tabURL, url, frameId === 0);
+                        const message = this.getTabMessage(tabOrigin, origin, frameId === 0);
                         if (tab.active && frameId === 0) {
                             chrome.tabs.sendMessage<Message>(tab.id, message, {frameId});
                         } else {
@@ -344,6 +354,10 @@ export default class TabManager {
     static async isActiveTabDarkThemeDetected() {
         const tab = await this.getActiveTab();
         return this.tabs[tab.id] && this.tabs[tab.id][0] && this.tabs[tab.id][0].darkThemeDetected;
+    }
+
+    static async getActiveTabOrigin() {
+        return this.getTabOrigin(await this.getActiveTab());
     }
 
     static async getActiveTabURL() {

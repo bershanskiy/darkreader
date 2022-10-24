@@ -399,8 +399,8 @@ export class Extension {
 
     private static async getActiveTabInfo() {
         await this.loadData();
-        const tabURL = await TabManager.getActiveTabURL();
-        const info = this.getTabInfo(tabURL);
+        const tabOrigin = await TabManager.getActiveTabOrigin();
+        const info = this.getTabInfo(tabOrigin);
         info.isInjected = await TabManager.canAccessActiveTab();
         if (UserStorage.settings.detectDarkTheme) {
             info.isDarkThemeDetected = await TabManager.isActiveTabDarkThemeDetected();
@@ -408,9 +408,9 @@ export class Extension {
         return info;
     }
 
-    private static async getConnectionMessage(tabURL: string, url: string, isTopFrame: boolean) {
+    private static async getConnectionMessage(tabOrigin: string, origin: string, isTopFrame: boolean) {
         await this.loadData();
-        return this.getTabMessage(tabURL, url, isTopFrame);
+        return this.getTabMessage(tabOrigin, origin, isTopFrame);
     }
 
     private static async loadData() {
