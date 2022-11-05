@@ -26,7 +26,7 @@ function Header({data, actions, onMoreToggleSettingsClick}: HeaderProps) {
     function toggleExtension(enabled: UserSettings['enabled']) {
         actions.changeSettings({
             enabled,
-            automation: {...data.settings.automation, ...{enabled: false}},
+            automation: {...data.settings.automation, enabled: false},
         });
     }
 

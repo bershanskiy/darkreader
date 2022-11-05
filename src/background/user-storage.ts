@@ -57,6 +57,10 @@ export default class UserStorage {
                 };
             }
             delete (settings as any).automationBehaviour;
+        } else if (typeof (settings.automation as any).enable !== 'undefined') {
+            // Clean up settings after buggy commit fdf757900816f6c92ff3841253c21e4221998cc6
+            // which contained typo of Automation.enabled as Automation.enable.
+            delete (settings.automation as any).enable;
         }
     }
 

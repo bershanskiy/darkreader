@@ -72,11 +72,11 @@ export default function AutomationPage(props: ViewProps) {
     }
 
     function changeAutomationMode(mode: Automation['mode']) {
-        props.actions.changeSettings({automation: {...props.data.settings.automation, ...{mode, enabled: Boolean(mode)}}});
+        props.actions.changeSettings({automation: {...props.data.settings.automation, mode, enabled: Boolean(mode)}});
     }
 
     function changeAutomationBehavior(behavior: Automation['behavior']) {
-        props.actions.changeSettings({automation: {...props.data.settings.automation, ...{behavior}}});
+        props.actions.changeSettings({automation: {...props.data.settings.automation, behavior}});
     }
 
     return (

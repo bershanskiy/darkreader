@@ -29,16 +29,16 @@ export default function AppSwitch(props: ViewProps) {
         if (index === 0) {
             props.actions.changeSettings({
                 enabled: true,
-                automation: {... props.data.settings.automation, ...{enabled: false}},
+                automation: {...props.data.settings.automation, enabled: false},
             });
         } else if (index === 2) {
             props.actions.changeSettings({
                 enabled: false,
-                automation:  {... props.data.settings.automation, ...{enabled: false}},
+                automation: {...props.data.settings.automation, enabled: false},
             });
         } else if (index === 1) {
             props.actions.changeSettings({
-                automation: {... props.data.settings.automation, ...{mode: AutomationMode.SYSTEM, enabled: true}},
+                automation: {...props.data.settings.automation, enabled: true},
             });
         }
     }
