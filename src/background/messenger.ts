@@ -40,7 +40,7 @@ export default class Messenger {
         if (isFirefox && makeFirefoxHappy(message, sender, sendResponse)) {
             return;
         }
-        const allowedSenderURL = [
+        const allowedSenderURL: Array<string | undefined> = [
             chrome.runtime.getURL('/ui/popup/index.html'),
             chrome.runtime.getURL('/ui/devtools/index.html'),
             chrome.runtime.getURL('/ui/stylesheet-editor/index.html')

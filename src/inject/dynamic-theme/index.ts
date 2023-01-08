@@ -155,7 +155,7 @@ function createStaticStyleOverrides() {
     document.head.insertBefore(rootVarsStyle, variableStyle.nextSibling);
 
     const injectProxyArg = !(fixes && fixes.disableStyleSheetsProxy);
-    injectProxyScript(injectProxyArg, rootVarsStyle.nextSibling);
+    injectProxyScript(injectProxyArg, rootVarsStyle.nextSibling!);
 }
 
 const shadowRootsWithOverrides = new Set<ShadowRoot>();
