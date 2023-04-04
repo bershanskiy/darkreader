@@ -41,6 +41,10 @@ export interface SitesFixesParserOptions<T> {
     parseCommandValue: (command: string, value: string) => any;
 }
 
+function standardizeCommand(line: string) {
+    return line.trim().toUpperCase();
+}
+
 export function parseSitesFixesConfig<T extends SiteProps>(text: string, options: SitesFixesParserOptions<T>) {
     const sites: T[] = [];
 
@@ -49,7 +53,7 @@ export function parseSitesFixesConfig<T extends SiteProps>(text: string, options
         const lines = block.split('\n');
         const commandIndices: number[] = [];
         lines.forEach((ln, i) => {
-            if (ln.match(/^[A-Z]+(\s[A-Z]+){0,2}$/)) {
+            if (options.commands.includes(standardizeCommand(ln))) {
                 commandIndices.push(i);
             }
         });
@@ -63,7 +67,7 @@ export function parseSitesFixesConfig<T extends SiteProps>(text: string, options
         } as T;
 
         commandIndices.forEach((commandIndex, i) => {
-            const command = lines[commandIndex].trim();
+            const command = standardizeCommand(lines[commandIndex]);
             const valueText = lines.slice(commandIndex + 1, i === commandIndices.length - 1 ? lines.length : commandIndices[i + 1]).join('\n');
             const prop = options.getCommandPropName(command);
             if (!prop) {
