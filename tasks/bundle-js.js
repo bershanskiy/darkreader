@@ -95,6 +95,23 @@ function freeRollupPluginInstance(name, key) {
     }
 }
 
+/**
+ * Lint for things which we do not have plugins for
+ * @param {import('rollup').RollupOutput} rollupOutput
+ * @throws
+ */
+function postWriteLint(rollupOutput) {
+    for (const chunk of rollupOutput.output) {
+        if (chunk.type === 'asset') {
+            throw new Error('Rollup assets are not supported');
+        }
+        if (!(chunk.code && chunk.code.includes('ASSERT') === false)) {
+            throw new Error(`Lint failed for ${chunk.name}, ${chunk.fileName}`);
+        }
+    }
+
+}
+
 async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log, test) {
     const {src, dest} = entry;
     const rollupPluginTypesctiptInstanceKey = `${platform}-${debug}`;
@@ -190,12 +207,13 @@ async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log
     freeRollupPluginInstance('typesctipt', rollupPluginTypesctiptInstanceKey);
     freeRollupPluginInstance('replace', rollupPluginReplaceInstanceKey);
     entry.watchFiles = bundle.watchFiles;
-    await bundle.write({
+    const output = await bundle.write({
         file: `${getDestDir({debug, platform})}/${destination}`,
         strict: true,
         format: 'iife',
         sourcemap: debug ? 'inline' : false,
     });
+    postWriteLint(output);
 }
 
 function getWatchFiles() {
