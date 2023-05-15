@@ -50,12 +50,15 @@ enum DocumentState {
 }
 
 export default class TabManager {
-    private static tabs: TabManagerState['tabs'];
-    private static stateManager: StateManager<TabManagerState>;
-    private static fileLoader: {get: (params: FetchRequestParameters) => Promise<string | null>} | null = null;
     private static onColorSchemeChange: TabManagerOptions['onColorSchemeChange'];
     private static getTabMessage: TabManagerOptions['getTabMessage'];
+    private static getConnectionMessage: TabManagerOptions['getConnectionMessage'];
+
+    private static tabs: TabManagerState['tabs'];
     private static timestamp: TabManagerState['timestamp'];
+    private static stateManager: StateManager<TabManagerState>;
+
+    private static fileLoader: {get: (params: FetchRequestParameters) => Promise<string | null>} | null = null;
     private static readonly LOCAL_STORAGE_KEY = 'TabManager-state';
 
     public static init({getConnectionMessage, onColorSchemeChange, getTabMessage}: TabManagerOptions): void {
@@ -63,152 +66,158 @@ export default class TabManager {
         TabManager.tabs = {};
         TabManager.onColorSchemeChange = onColorSchemeChange;
         TabManager.getTabMessage = getTabMessage;
+        TabManager.getConnectionMessage = getConnectionMessage;
 
-        chrome.runtime.onMessage.addListener(async (message: MessageCStoBG | MessageUItoBG, sender, sendResponse) => {
-            if (isFirefox && makeFirefoxHappy(message, sender, sendResponse)) {
-                return;
-            }
-            switch (message.type) {
-                case MessageTypeCStoBG.DOCUMENT_CONNECT: {
-                    TabManager.onColorSchemeMessage(message, sender);
-                    await TabManager.stateManager.loadState();
-                    const reply = (tabURL: string, url: string, isTopFrame: boolean) => {
-                        getConnectionMessage(tabURL, url, isTopFrame).then((message) => {
-                            message && chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, message,
-                                (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId: sender.frameId, documentId: (sender as any).documentId} as chrome.tabs.MessageSendOptions : {frameId: sender.frameId});
-                        });
-                    };
+        chrome.runtime.onMessage.addListener(TabManager.onMessage);
+        chrome.tabs.onRemoved.addListener(TabManager.onTabRemoved);
+    }
 
-                    if (isPanel(sender)) {
-                        // NOTE: Vivaldi and Opera can show a page in a side panel,
-                        // but it is not possible to handle messaging correctly (no tab ID, frame ID).
-                        if (isFirefox) {
-                            if (sender && sender.tab && typeof sender.tab.id === 'number') {
-                                chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab.id,
-                                    {
-                                        type: MessageTypeBGtoCS.UNSUPPORTED_SENDER,
-                                    },
-                                    {
-                                        frameId: sender && typeof sender.frameId === 'number' ? sender.frameId : undefined,
-                                    });
-                            }
-                        } else {
-                            sendResponse('unsupportedSender');
+    private static onTabRemoved(tabId: tabId) {
+        TabManager.removeFrame(tabId, 0);
+    }
+
+    private static async onMessage(message: MessageCStoBG | MessageUItoBG, sender: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
+        if (isFirefox && makeFirefoxHappy(message, sender, sendResponse)) {
+            return;
+        }
+        switch (message.type) {
+            case MessageTypeCStoBG.DOCUMENT_CONNECT: {
+                TabManager.onColorSchemeMessage(message, sender);
+                await TabManager.stateManager.loadState();
+                const reply = (tabURL: string, url: string, isTopFrame: boolean) => {
+                    TabManager.getConnectionMessage(tabURL, url, isTopFrame).then((message) => {
+                        message && chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, message,
+                            (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId: sender.frameId, documentId: (sender as any).documentId} as chrome.tabs.MessageSendOptions : {frameId: sender.frameId});
+                    });
+                };
+
+                if (isPanel(sender)) {
+                    // NOTE: Vivaldi and Opera can show a page in a side panel,
+                    // but it is not possible to handle messaging correctly (no tab ID, frame ID).
+                    if (isFirefox) {
+                        if (sender && sender.tab && typeof sender.tab.id === 'number') {
+                            chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab.id,
+                                {
+                                    type: MessageTypeBGtoCS.UNSUPPORTED_SENDER,
+                                },
+                                {
+                                    frameId: sender && typeof sender.frameId === 'number' ? sender.frameId : undefined,
+                                });
                         }
+                    } else {
+                        sendResponse('unsupportedSender');
+                    }
+                    return;
+                }
+
+                const tabId = sender.tab!.id!;
+                const tabURL = sender.tab!.url!;
+                const {frameId} = sender;
+                const url = sender.url!;
+                const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__) ? (sender as any).documentId : ((__FIREFOX_MV2__ || __THUNDERBIRD__) ? (sender as any).contextId : null);
+
+                TabManager.addDocument(documentId, tabId, frameId!, url);
+
+                reply(tabURL, url, frameId === 0);
+                TabManager.stateManager.saveState();
+                break;
+            }
+
+            case MessageTypeCStoBG.DOCUMENT_FORGET:
+                if (!sender.tab) {
+                    logWarn('Unexpected message', message, sender);
+                    break;
+                }
+                TabManager.removeFrame(sender.tab!.id!, sender.frameId!);
+                break;
+
+            case MessageTypeCStoBG.DOCUMENT_FREEZE: {
+                await TabManager.stateManager.loadState();
+                const info = TabManager.tabs[sender.tab!.id!][sender.frameId!];
+                info.state = DocumentState.FROZEN;
+                info.url = null;
+                TabManager.stateManager.saveState();
+                break;
+            }
+
+            case MessageTypeCStoBG.DOCUMENT_RESUME: {
+                TabManager.onColorSchemeMessage(message, sender);
+                await TabManager.stateManager.loadState();
+                const tabId = sender.tab!.id!;
+                const tabURL = sender.tab!.url!;
+                const frameId = sender.frameId!;
+                const url = sender.url!;
+                const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? (sender as any).documentId : null;
+                if (TabManager.tabs[tabId][frameId].timestamp < TabManager.timestamp) {
+                    const message = TabManager.getTabMessage(tabURL, url, frameId === 0);
+                    chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message,
+                        (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
+                }
+                TabManager.tabs[sender.tab!.id!][sender.frameId!] = {
+                    documentId,
+                    url,
+                    state: DocumentState.ACTIVE,
+                    darkThemeDetected: false,
+                    timestamp: TabManager.timestamp,
+                };
+                TabManager.stateManager.saveState();
+                break;
+            }
+
+            case MessageTypeCStoBG.DARK_THEME_DETECTED:
+                TabManager.tabs[sender.tab!.id!][sender.frameId!].darkThemeDetected = true;
+                break;
+
+            case MessageTypeCStoBG.FETCH: {
+                // Using custom response due to Chrome and Firefox incompatibility
+                // Sometimes fetch error behaves like synchronous and sends `undefined`
+                const id = message.id;
+                const sendResponse = (response: Partial<MessageBGtoCS>) => {
+                    chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, ...response}, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId: sender.frameId, documentId: (sender as any).documentId} as chrome.tabs.MessageSendOptions : {frameId: sender.frameId});
+                };
+
+                if (__THUNDERBIRD__) {
+                    // In thunderbird some CSS is loaded on a chrome:// URL.
+                    // Thunderbird restricted Add-ons to load those URL's.
+                    if ((message.data.url as string).startsWith('chrome://')) {
+                        sendResponse({data: null});
                         return;
                     }
-
-                    const tabId = sender.tab!.id!;
-                    const tabURL = sender.tab!.url!;
-                    const {frameId} = sender;
-                    const url = sender.url!;
-                    const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__) ? (sender as any).documentId : ((__FIREFOX_MV2__ || __THUNDERBIRD__) ? (sender as any).contextId : null);
-
-                    TabManager.addDocument(documentId, tabId, frameId!, url);
-
-                    reply(tabURL, url, frameId === 0);
-                    TabManager.stateManager.saveState();
-                    break;
                 }
-
-                case MessageTypeCStoBG.DOCUMENT_FORGET:
-                    if (!sender.tab) {
-                        logWarn('Unexpected message', message, sender);
-                        break;
+                try {
+                    const {url, responseType, mimeType, origin} = message.data;
+                    if (!TabManager.fileLoader) {
+                        TabManager.fileLoader = createFileLoader();
                     }
-                    TabManager.removeFrame(sender.tab!.id!, sender.frameId!);
-                    break;
-
-                case MessageTypeCStoBG.DOCUMENT_FREEZE: {
-                    await TabManager.stateManager.loadState();
-                    const info = TabManager.tabs[sender.tab!.id!][sender.frameId!];
-                    info.state = DocumentState.FROZEN;
-                    info.url = null;
-                    TabManager.stateManager.saveState();
-                    break;
+                    const response = await TabManager.fileLoader.get({url, responseType, mimeType, origin});
+                    sendResponse({data: response});
+                } catch (err) {
+                    sendResponse({error: err && err.message ? err.message : err});
                 }
-
-                case MessageTypeCStoBG.DOCUMENT_RESUME: {
-                    TabManager.onColorSchemeMessage(message, sender);
-                    await TabManager.stateManager.loadState();
-                    const tabId = sender.tab!.id!;
-                    const tabURL = sender.tab!.url!;
-                    const frameId = sender.frameId!;
-                    const url = sender.url!;
-                    const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? (sender as any).documentId : null;
-                    if (TabManager.tabs[tabId][frameId].timestamp < TabManager.timestamp) {
-                        const message = TabManager.getTabMessage(tabURL, url, frameId === 0);
-                        chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message,
-                            (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
-                    }
-                    TabManager.tabs[sender.tab!.id!][sender.frameId!] = {
-                        documentId,
-                        url,
-                        state: DocumentState.ACTIVE,
-                        darkThemeDetected: false,
-                        timestamp: TabManager.timestamp,
-                    };
-                    TabManager.stateManager.saveState();
-                    break;
-                }
-
-                case MessageTypeCStoBG.DARK_THEME_DETECTED:
-                    TabManager.tabs[sender.tab!.id!][sender.frameId!].darkThemeDetected = true;
-                    break;
-
-                case MessageTypeCStoBG.FETCH: {
-                    // Using custom response due to Chrome and Firefox incompatibility
-                    // Sometimes fetch error behaves like synchronous and sends `undefined`
-                    const id = message.id;
-                    const sendResponse = (response: Partial<MessageBGtoCS>) => {
-                        chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, ...response}, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId: sender.frameId, documentId: (sender as any).documentId} as chrome.tabs.MessageSendOptions : {frameId: sender.frameId});
-                    };
-
-                    if (__THUNDERBIRD__) {
-                        // In thunderbird some CSS is loaded on a chrome:// URL.
-                        // Thunderbird restricted Add-ons to load those URL's.
-                        if ((message.data.url as string).startsWith('chrome://')) {
-                            sendResponse({data: null});
-                            return;
-                        }
-                    }
-                    try {
-                        const {url, responseType, mimeType, origin} = message.data;
-                        if (!TabManager.fileLoader) {
-                            TabManager.fileLoader = createFileLoader();
-                        }
-                        const response = await TabManager.fileLoader.get({url, responseType, mimeType, origin});
-                        sendResponse({data: response});
-                    } catch (err) {
-                        sendResponse({error: err && err.message ? err.message : err});
-                    }
-                    break;
-                }
-
-                case MessageTypeUItoBG.COLOR_SCHEME_CHANGE:
-                    // fallthrough
-                case MessageTypeCStoBG.COLOR_SCHEME_CHANGE:
-                    TabManager.onColorSchemeMessage(message as MessageCStoBG, sender);
-                    break;
-
-                case MessageTypeUItoBG.SAVE_FILE: {
-                    if (__CHROMIUM_MV3__) {
-                        break;
-                    }
-                    const {content, name} = message.data;
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(new Blob([content]));
-                    a.download = name;
-                    a.click();
-                    break;
-                }
-
-                default:
-                    break;
+                break;
             }
-        });
 
-        chrome.tabs.onRemoved.addListener(async (tabId) => TabManager.removeFrame(tabId, 0));
+            case MessageTypeUItoBG.COLOR_SCHEME_CHANGE:
+            // fallthrough
+            case MessageTypeCStoBG.COLOR_SCHEME_CHANGE:
+                TabManager.onColorSchemeMessage(message as MessageCStoBG, sender);
+                break;
+
+            case MessageTypeUItoBG.SAVE_FILE: {
+                if (__CHROMIUM_MV3__) {
+                    break;
+                }
+                const {content, name} = message.data;
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([content]));
+                a.download = name;
+                a.click();
+                break;
+            }
+
+            default:
+                break;
+        }
     }
 
     private static onColorSchemeMessage(message: MessageCStoBG, sender: chrome.runtime.MessageSender) {
