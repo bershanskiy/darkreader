@@ -122,6 +122,10 @@ export default class TabManager {
                     const isTopFrame = frameId === 0;
                     const message = TabManager.getTabMessage(tabURL, url, isTopFrame);
                     TabManager.sendMessageResponse(sender.documentId, tabId, frameId, message, sendResponse);
+                } else {
+                    if (__CHROMIUM_MV2__) {
+                        sendResponse({type: '¯\\_(ツ)_/¯'});
+                    }
                 }
                 TabManager.recordDocumentResume(sender);
                 return needsUpdate;
