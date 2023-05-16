@@ -7,7 +7,6 @@ import {MessageTypeCStoBG, MessageTypeBGtoCS, MessageTypeUItoBG} from '../utils/
 import {ASSERT, logInfo, logWarn} from './utils/log';
 import {StateManager} from '../utils/state-manager';
 import {getURLHostOrProtocol} from '../utils/url';
-import {isPanel} from './utils/tab';
 import {makeFirefoxHappy} from './make-firefox-happy';
 import {getActiveTab, queryTabs} from '../utils/tabs';
 
@@ -181,7 +180,7 @@ export default class TabManager {
         }
     }
 
-    private static sendMessageResponse(sender: chrome.runtime.MessageSender, message: MessageBGtoCS,  sendResponse: (message: MessageBGtoCS) => void): void {
+    private static sendMessageResponse(sender: chrome.runtime.MessageSender, message: MessageBGtoCS, sendResponse: (message: MessageBGtoCS) => void): void {
         ASSERT('Message must be non-empty to be sent', message);
         sendResponse(message);
         try {
