@@ -83,9 +83,6 @@ export default class TabManager {
         switch (message.type) {
             case MessageTypeCStoBG.DOCUMENT_CONNECT: {
                 TabManager.onColorSchemeMessage(message, sender);
-                const reply = (tabURL: string, url: string, isTopFrame: boolean) =>
-                    TabManager.getConnectionMessage(tabURL, url, isTopFrame)
-                        .then((message) => message && TabManager.sendMessageResponse(sender, message, sendResponse));
 
                 const tabId = sender.tab!.id!;
                 const tabURL = sender.tab!.url!;
@@ -93,7 +90,8 @@ export default class TabManager {
                 const url = sender.url!;
                 const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__) ? (sender as any).documentId : ((__FIREFOX_MV2__ || __THUNDERBIRD__) ? (sender as any).contextId : null);
 
-                reply(tabURL, url, frameId === 0);
+                TabManager.getConnectionMessage(tabURL, url, frameId === 0)
+                        .then((message) => message && TabManager.sendMessageResponse(documentId, tabId, frameId!, message, sendResponse));
 
                 // No need to await
                 TabManager.recordDocumentAdd(documentId, tabId, frameId!, url);
@@ -121,7 +119,7 @@ export default class TabManager {
                 if (TabManager.tabs[tabId][frameId].timestamp < TabManager.timestamp) {
                     const tabURL = sender.tab!.url!;
                     const message = TabManager.getTabMessage(tabURL, url, frameId === 0);
-                    TabManager.sendMessageResponse(sender, message, sendResponse);
+                    TabManager.sendMessageResponse(sender.documentId!, tabId, frameId, message, sendResponse);
                 }
                 TabManager.recordDocumentResume(sender);
                 return true;
@@ -133,7 +131,7 @@ export default class TabManager {
 
             case MessageTypeCStoBG.FETCH: {
                 const respond = (data: any, error: any) =>
-                    TabManager.sendMessageResponse(sender, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id: message.id, data, error}, sendResponse);
+                    TabManager.sendMessageResponse(sender.documentId!, sender.tab!.id!, sender.frameId!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id: message.id, data, error}, sendResponse);
 
                 if (__THUNDERBIRD__) {
                     // In thunderbird some CSS is loaded on a chrome:// URL.
@@ -178,13 +176,11 @@ export default class TabManager {
         }
     }
 
-    private static sendMessageResponse(sender: chrome.runtime.MessageSender, message: MessageBGtoCS, sendResponse: (message: MessageBGtoCS) => void): void {
+    private static sendMessageResponse(documentId: documentId, tabId: tabId, frameId: frameId, message: MessageBGtoCS, sendResponse?: (message: MessageBGtoCS) => void): void {
         ASSERT('Message must be non-empty to be sent', message);
-        sendResponse(message);
+        sendResponse && sendResponse(message);
         try {
-            const id = sender.tab!.id!;
-            const {frameId, documentId} = sender;
-            chrome.tabs.sendMessage<MessageBGtoCS>(id, message, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
+            chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
         } catch (e) {
 
         }
@@ -352,6 +348,7 @@ export default class TabManager {
 
                         const message = TabManager.getTabMessage(tabURL, url!, frameId === 0);
                         if (tab.active && frameId === 0) {
+                            TabManager.sendMessageResponse(documentId!, 0, frameId, message);
                             chrome.tabs.sendMessage<MessageBGtoCS>(tab.id!, message, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
                         } else {
                             setTimeout(() => {
