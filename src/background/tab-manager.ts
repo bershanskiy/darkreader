@@ -351,12 +351,9 @@ export default class TabManager {
 
                         const message = TabManager.getTabMessage(tabURL, url!, frameId === 0);
                         if (tab.active && frameId === 0) {
-                            TabManager.sendMessageResponse(documentId!, 0, frameId, message);
-                            chrome.tabs.sendMessage<MessageBGtoCS>(tab.id!, message, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
+                            TabManager.sendMessageResponse(documentId!, tab.id!, frameId, message);
                         } else {
-                            setTimeout(() => {
-                                chrome.tabs.sendMessage<MessageBGtoCS>(tab.id!, message, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
-                            });
+                            setTimeout(() => TabManager.sendMessageResponse(documentId!, tab.id!, frameId, message));
                         }
                         if (TabManager.tabs[tab.id!][frameId]) {
                             TabManager.tabs[tab.id!][frameId].timestamp = TabManager.timestamp;
