@@ -221,11 +221,10 @@ export default class TabManager {
     }
 
     private static async recordDocumentFreeze(sender: chrome.runtime.MessageSender) {
-        ASSERT('', sender && sender.tab && sender.tab.id);
-        ASSERT('', Number.isInteger(sender.frameId));
+        ASSERT('tabId is an integer', sender && sender.tab && Number.isInteger(sender.tab.id));
+        ASSERT('frameId is an integer', sender && Number.isInteger(sender.frameId));
         await TabManager.stateManager.loadState();
         const info = TabManager.tabs[sender.tab!.id!][sender.frameId!];
-        ASSERT('', info);
         info.state = DocumentState.FROZEN;
         info.url = null;
         await TabManager.stateManager.saveState();
