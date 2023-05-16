@@ -147,7 +147,7 @@ export default class TabManager {
                     const message = TabManager.getTabMessage(tabURL, url, frameId === 0);
                     chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message,
                         (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
-                }        
+                }
                 TabManager.recordDocumentResume(sender);
                 break;
             }
