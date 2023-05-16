@@ -116,13 +116,15 @@ export default class TabManager {
                 const tabId = sender.tab!.id!;
                 const frameId = sender.frameId!;
                 const url = sender.url!;
-                if (TabManager.tabs[tabId][frameId].timestamp < TabManager.timestamp) {
+                const needsUpdate = TabManager.tabs[tabId][frameId].timestamp < TabManager.timestamp;
+                if (needsUpdate) {
                     const tabURL = sender.tab!.url!;
-                    const message = TabManager.getTabMessage(tabURL, url, frameId === 0);
+                    const isTopFrame = frameId === 0;
+                    const message = TabManager.getTabMessage(tabURL, url, isTopFrame);
                     TabManager.sendMessageResponse(sender.documentId!, tabId, frameId, message, sendResponse);
                 }
                 TabManager.recordDocumentResume(sender);
-                return true;
+                return needsUpdate;
             }
 
             case MessageTypeCStoBG.DARK_THEME_DETECTED:
@@ -148,6 +150,7 @@ export default class TabManager {
                 TabManager.fileLoader.get({url, responseType, mimeType, origin})
                     .then((data) => respond(data, null))
                     .catch((error) => respond(null, error && error.message ? error.message : error));
+
                 // Must return true to indicate async response
                 return true;
             }
