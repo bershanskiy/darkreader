@@ -73,17 +73,17 @@ export default class TabManager {
     }
 
     private static onTabRemoved(tabId: tabId) {
-        TabManager.removeFrame(tabId, 0);
+        TabManager.recordDocumentForget(tabId, 0);
     }
 
-    private static async onMessage(message: MessageCStoBG | MessageUItoBG, sender: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
+    // Must be sync to work well with other message listeners
+    private static onMessage(message: MessageCStoBG | MessageUItoBG, sender: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
         if (isFirefox && makeFirefoxHappy(message, sender, sendResponse)) {
             return;
         }
         switch (message.type) {
             case MessageTypeCStoBG.DOCUMENT_CONNECT: {
                 TabManager.onColorSchemeMessage(message, sender);
-                await TabManager.stateManager.loadState();
                 const reply = (tabURL: string, url: string, isTopFrame: boolean) => {
                     TabManager.getConnectionMessage(tabURL, url, isTopFrame).then((message) => {
                         message && chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, message,
@@ -116,10 +116,10 @@ export default class TabManager {
                 const url = sender.url!;
                 const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__) ? (sender as any).documentId : ((__FIREFOX_MV2__ || __THUNDERBIRD__) ? (sender as any).contextId : null);
 
-                TabManager.addDocument(documentId, tabId, frameId!, url);
-
                 reply(tabURL, url, frameId === 0);
-                TabManager.stateManager.saveState();
+
+                // No need to await
+                TabManager.recordDocumentAdd(documentId, tabId, frameId!, url);
                 break;
             }
 
@@ -128,21 +128,16 @@ export default class TabManager {
                     logWarn('Unexpected message', message, sender);
                     break;
                 }
-                TabManager.removeFrame(sender.tab!.id!, sender.frameId!);
+                TabManager.recordDocumentForget(sender.tab!.id!, sender.frameId!);
                 break;
 
             case MessageTypeCStoBG.DOCUMENT_FREEZE: {
-                await TabManager.stateManager.loadState();
-                const info = TabManager.tabs[sender.tab!.id!][sender.frameId!];
-                info.state = DocumentState.FROZEN;
-                info.url = null;
-                TabManager.stateManager.saveState();
+                TabManager.recordDocumentFreeze(sender);
                 break;
             }
 
             case MessageTypeCStoBG.DOCUMENT_RESUME: {
                 TabManager.onColorSchemeMessage(message, sender);
-                await TabManager.stateManager.loadState();
                 const tabId = sender.tab!.id!;
                 const tabURL = sender.tab!.url!;
                 const frameId = sender.frameId!;
@@ -152,15 +147,8 @@ export default class TabManager {
                     const message = TabManager.getTabMessage(tabURL, url, frameId === 0);
                     chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message,
                         (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
-                }
-                TabManager.tabs[sender.tab!.id!][sender.frameId!] = {
-                    documentId,
-                    url,
-                    state: DocumentState.ACTIVE,
-                    darkThemeDetected: false,
-                    timestamp: TabManager.timestamp,
-                };
-                TabManager.stateManager.saveState();
+                }        
+                TabManager.recordDocumentResume(sender);
                 break;
             }
 
@@ -184,17 +172,15 @@ export default class TabManager {
                         return;
                     }
                 }
-                try {
-                    const {url, responseType, mimeType, origin} = message.data;
-                    if (!TabManager.fileLoader) {
-                        TabManager.fileLoader = createFileLoader();
-                    }
-                    const response = await TabManager.fileLoader.get({url, responseType, mimeType, origin});
-                    sendResponse({data: response});
-                } catch (err) {
-                    sendResponse({error: err && err.message ? err.message : err});
+                const {url, responseType, mimeType, origin} = message.data;
+                if (!TabManager.fileLoader) {
+                    TabManager.fileLoader = createFileLoader();
                 }
-                break;
+                TabManager.fileLoader.get({url, responseType, mimeType, origin})
+                    .then((data) => chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, data}))
+                    .catch((error) => chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, error: error && error.message ? error.message : error}));
+                // Must return true to indicate async response
+                return true;
             }
 
             case MessageTypeUItoBG.COLOR_SCHEME_CHANGE:
@@ -232,8 +218,9 @@ export default class TabManager {
         }
     }
 
-    private static addDocument(documentId: documentId, tabId: tabId, frameId: frameId, url: string) {
+    private static async recordDocumentAdd(documentId: documentId, tabId: tabId, frameId: frameId, url: string) {
         let frames: {[frameId: frameId]: DocumentInfo};
+        await TabManager.stateManager.loadState();
         if (TabManager.tabs[tabId]) {
             frames = TabManager.tabs[tabId];
         } else {
@@ -247,9 +234,35 @@ export default class TabManager {
             darkThemeDetected: false,
             timestamp: TabManager.timestamp,
         };
+        await TabManager.stateManager.saveState();
     }
 
-    private static async removeFrame(tabId: tabId, frameId: frameId) {
+    private static async recordDocumentFreeze(sender: chrome.runtime.MessageSender) {
+        ASSERT('', sender && sender.tab && sender.tab.id);
+        ASSERT('', Number.isInteger(sender.frameId));
+        await TabManager.stateManager.loadState();
+        const info = TabManager.tabs[sender.tab!.id!][sender.frameId!];
+        ASSERT('', info);
+        info.state = DocumentState.FROZEN;
+        info.url = null;
+        await TabManager.stateManager.saveState();
+    }
+
+    private static async recordDocumentResume(sender: chrome.runtime.MessageSender) {
+        await TabManager.stateManager.loadState();
+        const url = sender.url!;
+        const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? (sender as any).documentId : null;
+        TabManager.tabs[sender.tab!.id!][sender.frameId!] = {
+            documentId,
+            url,
+            state: DocumentState.ACTIVE,
+            darkThemeDetected: false,
+            timestamp: TabManager.timestamp,
+        };
+        TabManager.stateManager.saveState();
+    }
+
+    private static async recordDocumentForget(tabId: tabId, frameId: frameId) {
         await TabManager.stateManager.loadState();
 
         if (frameId === 0) {
@@ -262,7 +275,7 @@ export default class TabManager {
             delete TabManager.tabs[tabId][frameId];
         }
 
-        TabManager.stateManager.saveState();
+        await TabManager.stateManager.saveState();
     }
 
     private static async getTabURL(tab: chrome.tabs.Tab | null): Promise<string> {
@@ -343,6 +356,7 @@ export default class TabManager {
             .forEach((tab) => {
                 const frames = TabManager.tabs[tab.id!];
                 Object.entries(frames)
+                    .filter(([, documentInfo]) => Boolean(documentInfo))
                     .filter(([, {state}]) => state === DocumentState.ACTIVE || state === DocumentState.PASSIVE)
                     .forEach(async ([id, {url, documentId}]) => {
                         const frameId = Number(id);

@@ -28,33 +28,11 @@ export default class Connector implements ExtensionActions {
         });
     }
 
-    private async firefoxSendRequestWithResponse<T>(type: MessageTypeUItoBG, data?: string): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            const dataPort = chrome.runtime.connect({name: type});
-            dataPort.onDisconnect.addListener(() => reject());
-            dataPort.onMessage.addListener(({data, error}) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(data);
-                }
-                dataPort.disconnect();
-            });
-            data && dataPort.postMessage({data});
-        });
-    }
-
     public async getData(): Promise<ExtensionData> {
-        if (isFirefox) {
-            return await this.firefoxSendRequestWithResponse<ExtensionData>(MessageTypeUItoBG.GET_DATA);
-        }
         return await this.sendRequest<ExtensionData>(MessageTypeUItoBG.GET_DATA);
     }
 
     public async getDevToolsData(): Promise<DevToolsData> {
-        if (isFirefox) {
-            return await this.firefoxSendRequestWithResponse<DevToolsData>(MessageTypeUItoBG.GET_DEVTOOLS_DATA);
-        }
         return await this.sendRequest<DevToolsData>(MessageTypeUItoBG.GET_DEVTOOLS_DATA);
     }
 
@@ -118,9 +96,6 @@ export default class Connector implements ExtensionActions {
     }
 
     public async applyDevDynamicThemeFixes(text: string): Promise<void> {
-        if (isFirefox) {
-            return await this.firefoxSendRequestWithResponse<void>(MessageTypeUItoBG.APPLY_DEV_DYNAMIC_THEME_FIXES, text);
-        }
         return await this.sendRequest<void>(MessageTypeUItoBG.APPLY_DEV_DYNAMIC_THEME_FIXES, text);
     }
 
@@ -129,9 +104,6 @@ export default class Connector implements ExtensionActions {
     }
 
     public async applyDevInversionFixes(text: string): Promise<void> {
-        if (isFirefox) {
-            return await this.firefoxSendRequestWithResponse<void>(MessageTypeUItoBG.APPLY_DEV_INVERSION_FIXES, text);
-        }
         return await this.sendRequest<void>(MessageTypeUItoBG.APPLY_DEV_INVERSION_FIXES, text);
     }
 
@@ -140,9 +112,6 @@ export default class Connector implements ExtensionActions {
     }
 
     public async applyDevStaticThemes(text: string): Promise<void> {
-        if (isFirefox) {
-            return await this.firefoxSendRequestWithResponse<void>(MessageTypeUItoBG.APPLY_DEV_STATIC_THEMES, text);
-        }
         return await this.sendRequest<void>(MessageTypeUItoBG.APPLY_DEV_STATIC_THEMES, text);
     }
 
