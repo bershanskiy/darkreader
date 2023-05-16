@@ -116,17 +116,15 @@ export default class TabManager {
             case MessageTypeCStoBG.DOCUMENT_RESUME: {
                 TabManager.onColorSchemeMessage(message, sender);
                 const tabId = sender.tab!.id!;
-                const tabURL = sender.tab!.url!;
                 const frameId = sender.frameId!;
                 const url = sender.url!;
-                const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? (sender as any).documentId : null;
                 if (TabManager.tabs[tabId][frameId].timestamp < TabManager.timestamp) {
+                    const tabURL = sender.tab!.url!;
                     const message = TabManager.getTabMessage(tabURL, url, frameId === 0);
-                    chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message,
-                        (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
+                    TabManager.sendMessageResponse(sender, message, sendResponse);
                 }
                 TabManager.recordDocumentResume(sender);
-                break;
+                return true;
             }
 
             case MessageTypeCStoBG.DARK_THEME_DETECTED:
