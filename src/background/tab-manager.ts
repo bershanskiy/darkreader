@@ -84,31 +84,9 @@ export default class TabManager {
         switch (message.type) {
             case MessageTypeCStoBG.DOCUMENT_CONNECT: {
                 TabManager.onColorSchemeMessage(message, sender);
-                const reply = (tabURL: string, url: string, isTopFrame: boolean) => {
-                    TabManager.getConnectionMessage(tabURL, url, isTopFrame).then((message) => {
-                        message && chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, message,
-                            (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId: sender.frameId, documentId: (sender as any).documentId} as chrome.tabs.MessageSendOptions : {frameId: sender.frameId});
-                    });
-                };
-
-                if (isPanel(sender)) {
-                    // NOTE: Vivaldi and Opera can show a page in a side panel,
-                    // but it is not possible to handle messaging correctly (no tab ID, frame ID).
-                    if (isFirefox) {
-                        if (sender && sender.tab && typeof sender.tab.id === 'number') {
-                            chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab.id,
-                                {
-                                    type: MessageTypeBGtoCS.UNSUPPORTED_SENDER,
-                                },
-                                {
-                                    frameId: sender && typeof sender.frameId === 'number' ? sender.frameId : undefined,
-                                });
-                        }
-                    } else {
-                        sendResponse('unsupportedSender');
-                    }
-                    return;
-                }
+                const reply = (tabURL: string, url: string, isTopFrame: boolean) =>
+                    TabManager.getConnectionMessage(tabURL, url, isTopFrame)
+                        .then((message) => message && TabManager.sendMessageResponse(sender, message, sendResponse));
 
                 const tabId = sender.tab!.id!;
                 const tabURL = sender.tab!.url!;
@@ -204,6 +182,7 @@ export default class TabManager {
     }
 
     private static sendMessageResponse(sender: chrome.runtime.MessageSender, message: MessageBGtoCS,  sendResponse: (message: MessageBGtoCS) => void): void {
+        ASSERT('Message must be non-empty to be sent', message);
         sendResponse(message);
         try {
             const id = sender.tab!.id!;
