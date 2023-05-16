@@ -121,7 +121,7 @@ export default class TabManager {
                     const tabURL = sender.tab!.url!;
                     const isTopFrame = frameId === 0;
                     const message = TabManager.getTabMessage(tabURL, url, isTopFrame);
-                    TabManager.sendMessageResponse(sender.documentId!, tabId, frameId, message, sendResponse);
+                    TabManager.sendMessageResponse(sender.documentId, tabId, frameId, message, sendResponse);
                 }
                 TabManager.recordDocumentResume(sender);
                 return needsUpdate;
@@ -133,7 +133,7 @@ export default class TabManager {
 
             case MessageTypeCStoBG.FETCH: {
                 const respond = (data: any, error: any) =>
-                    TabManager.sendMessageResponse(sender.documentId!, sender.tab!.id!, sender.frameId!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id: message.id, data, error}, sendResponse);
+                    TabManager.sendMessageResponse(sender.documentId, sender.tab!.id!, sender.frameId!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id: message.id, data, error}, sendResponse);
 
                 if (__THUNDERBIRD__) {
                     // In thunderbird some CSS is loaded on a chrome:// URL.
@@ -179,7 +179,7 @@ export default class TabManager {
         }
     }
 
-    private static sendMessageResponse(documentId: documentId, tabId: tabId, frameId: frameId, message: MessageBGtoCS, sendResponse?: (message: MessageBGtoCS) => void): void {
+    private static sendMessageResponse(documentId: documentId | null | undefined, tabId: tabId, frameId: frameId, message: MessageBGtoCS, sendResponse?: (message: MessageBGtoCS) => void): void {
         ASSERT('Message must be non-empty to be sent', message);
         sendResponse && sendResponse(message);
         try {
@@ -351,9 +351,9 @@ export default class TabManager {
 
                         const message = TabManager.getTabMessage(tabURL, url!, frameId === 0);
                         if (tab.active && frameId === 0) {
-                            TabManager.sendMessageResponse(documentId!, tab.id!, frameId, message);
+                            TabManager.sendMessageResponse(documentId, tab.id!, frameId, message);
                         } else {
-                            setTimeout(() => TabManager.sendMessageResponse(documentId!, tab.id!, frameId, message));
+                            setTimeout(() => TabManager.sendMessageResponse(documentId, tab.id!, frameId, message));
                         }
                         if (TabManager.tabs[tab.id!][frameId]) {
                             TabManager.tabs[tab.id!][frameId].timestamp = TabManager.timestamp;
