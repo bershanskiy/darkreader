@@ -157,19 +157,15 @@ export default class TabManager {
                 break;
 
             case MessageTypeCStoBG.FETCH: {
-                // Using custom response due to Chrome and Firefox incompatibility
-                // Sometimes fetch error behaves like synchronous and sends `undefined`
-                const id = message.id;
-                const sendResponse = (response: Partial<MessageBGtoCS>) => {
-                    chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, ...response}, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? {frameId: sender.frameId, documentId: (sender as any).documentId} as chrome.tabs.MessageSendOptions : {frameId: sender.frameId});
-                };
+                const respond = (data: any, error: any) =>
+                    TabManager.sendMessageResponse(sender, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id: message.id, data, error}, sendResponse);
 
                 if (__THUNDERBIRD__) {
                     // In thunderbird some CSS is loaded on a chrome:// URL.
                     // Thunderbird restricted Add-ons to load those URL's.
                     if ((message.data.url as string).startsWith('chrome://')) {
-                        sendResponse({data: null});
-                        return;
+                        respond(null, null);
+                        return true;
                     }
                 }
                 const {url, responseType, mimeType, origin} = message.data;
@@ -177,18 +173,19 @@ export default class TabManager {
                     TabManager.fileLoader = createFileLoader();
                 }
                 TabManager.fileLoader.get({url, responseType, mimeType, origin})
-                    .then((data) => chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, data}))
-                    .catch((error) => chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, error: error && error.message ? error.message : error}));
+                    .then((data) => respond(data, null))
+                    .catch((error) => respond(null, error && error.message ? error.message : error));
                 // Must return true to indicate async response
                 return true;
             }
 
             case MessageTypeUItoBG.COLOR_SCHEME_CHANGE:
-            // fallthrough
+                // fallthrough
             case MessageTypeCStoBG.COLOR_SCHEME_CHANGE:
                 TabManager.onColorSchemeMessage(message as MessageCStoBG, sender);
                 break;
 
+            // TODO: backport MV3 path to regular builds
             case MessageTypeUItoBG.SAVE_FILE: {
                 if (__CHROMIUM_MV3__) {
                     break;
@@ -203,6 +200,17 @@ export default class TabManager {
 
             default:
                 break;
+        }
+    }
+
+    private static sendMessageResponse(sender: chrome.runtime.MessageSender, message: MessageBGtoCS,  sendResponse: (message: MessageBGtoCS) => void): void {
+        sendResponse(message);
+        try {
+            const id = sender.tab!.id!;
+            const {frameId, documentId} = sender;
+            chrome.tabs.sendMessage<MessageBGtoCS>(id, message, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
+        } catch (e) {
+
         }
     }
 
