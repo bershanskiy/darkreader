@@ -1,7 +1,7 @@
 import {canInjectScript} from '../background/utils/extension-api';
 import {createFileLoader} from './utils/network';
 import type {FetchRequestParameters} from './utils/network';
-import type {MessageBGtoCS, MessageCStoBG, MessageUItoBG, documentId, frameId, tabId} from '../definitions';
+import type {MessageBGtoCS, MessageCStoBG, MessageUItoBG, documentId, frameId, scriptId, tabId} from '../definitions';
 import {isFirefox} from '../utils/platform';
 import {MessageTypeCStoBG, MessageTypeBGtoCS, MessageTypeUItoBG} from '../utils/message';
 import {ASSERT, logInfo, logWarn} from './utils/log';
@@ -30,8 +30,13 @@ interface DocumentInfo {
     darkThemeDetected: boolean;
 }
 
+/**
+ * Not every document has an associated tab and frame, so we store all documents in
+ * TabManagerState.documents and a tree of tab frames and associated documents within them
+ */
 interface TabManagerState extends Record<string, unknown> {
-    tabs: {[tabId: tabId]: {[frameId: frameId]: DocumentInfo}};
+    tabs: {[tabId: tabId]: {[frameId: frameId]: scriptId}};
+    documents: {[scriptId: scriptId]: DocumentInfo}
     timestamp: number;
 }
 
@@ -54,6 +59,7 @@ export default class TabManager {
     private static getTabMessage: TabManagerOptions['getTabMessage'];
     private static getConnectionMessage: TabManagerOptions['getConnectionMessage'];
 
+    private static documents: TabManagerState['documents'];
     private static tabs: TabManagerState['tabs'];
     private static timestamp: TabManagerState['timestamp'];
     private static stateManager: StateManager<TabManagerState>;
@@ -62,8 +68,9 @@ export default class TabManager {
     private static readonly LOCAL_STORAGE_KEY = 'TabManager-state';
 
     public static init({getConnectionMessage, onColorSchemeChange, getTabMessage}: TabManagerOptions): void {
-        TabManager.stateManager = new StateManager<TabManagerState>(TabManager.LOCAL_STORAGE_KEY, this, {tabs: {}, timestamp: 0}, logWarn);
+        TabManager.stateManager = new StateManager<TabManagerState>(TabManager.LOCAL_STORAGE_KEY, this, {documents: {}, tabs: {}, timestamp: 0}, logWarn);
         TabManager.tabs = {};
+        TabManager.documents = {};
         TabManager.onColorSchemeChange = onColorSchemeChange;
         TabManager.getTabMessage = getTabMessage;
         TabManager.getConnectionMessage = getConnectionMessage;
@@ -117,7 +124,8 @@ export default class TabManager {
                 const tabId = sender.tab!.id!;
                 const frameId = sender.frameId!;
                 const url = sender.url!;
-                const needsUpdate = TabManager.tabs[tabId][frameId].timestamp < TabManager.timestamp;
+                const scriptId = TabManager.tabs[tabId][frameId];
+                const needsUpdate = TabManager.documents[scriptId].timestamp < TabManager.timestamp;
                 if (needsUpdate) {
                     const tabURL = sender.tab!.url!;
                     const isTopFrame = frameId === 0;
@@ -133,7 +141,8 @@ export default class TabManager {
             }
 
             case MessageTypeCStoBG.DARK_THEME_DETECTED:
-                TabManager.tabs[sender.tab!.id!][sender.frameId!].darkThemeDetected = true;
+                const scriptId = TabManager.tabs[sender.tab!.id!][sender.frameId!];
+                TabManager.documents[scriptId].darkThemeDetected = true;
                 break;
 
             case MessageTypeCStoBG.FETCH: {
@@ -206,7 +215,7 @@ export default class TabManager {
     }
 
     private static async recordDocumentAdd(scriptId: string, documentId: documentId, tabId: tabId, frameId: frameId, url: string) {
-        let frames: {[frameId: frameId]: DocumentInfo};
+        let frames: {[frameId: frameId]: scriptId};
         await TabManager.stateManager.loadState();
         if (TabManager.tabs[tabId]) {
             frames = TabManager.tabs[tabId];
@@ -214,7 +223,8 @@ export default class TabManager {
             frames = {};
             TabManager.tabs[tabId] = frames;
         }
-        frames[frameId] = {
+        frames[frameId] = scriptId;
+        TabManager.documents[scriptId] = {
             documentId,
             scriptId,
             url,
@@ -229,7 +239,8 @@ export default class TabManager {
         ASSERT('tabId is an integer', sender && sender.tab && Number.isInteger(sender.tab.id));
         ASSERT('frameId is an integer', sender && Number.isInteger(sender.frameId));
         await TabManager.stateManager.loadState();
-        const info = TabManager.tabs[sender.tab!.id!][sender.frameId!];
+        const scriptId = TabManager.tabs[sender.tab!.id!][sender.frameId!];
+        const info = TabManager.documents[scriptId];
         info.state = DocumentState.FROZEN;
         info.url = null;
         await TabManager.stateManager.saveState();
@@ -239,7 +250,8 @@ export default class TabManager {
         await TabManager.stateManager.loadState();
         const url = sender.url!;
         const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? (sender as any).documentId : null;
-        TabManager.tabs[sender.tab!.id!][sender.frameId!] = {
+        TabManager.tabs[sender.tab!.id!][sender.frameId!] = scriptId;
+        TabManager.documents[scriptId] = {
             documentId,
             scriptId,
             url,
@@ -273,7 +285,8 @@ export default class TabManager {
             }
             try {
                 if (TabManager.tabs[tab.id!] && TabManager.tabs[tab.id!][0]) {
-                    return TabManager.tabs[tab.id!][0].url || 'about:blank';
+                    const scriptId = TabManager.tabs[tab.id!][0];
+                    return TabManager.documents[scriptId] && TabManager.documents[scriptId].url || 'about:blank';
                 }
                 return (await chrome.scripting.executeScript({
                     target: {
@@ -344,7 +357,8 @@ export default class TabManager {
             .forEach((tab) => {
                 const frames = TabManager.tabs[tab.id!];
                 Object.entries(frames)
-                    .filter(([, documentInfo]) => Boolean(documentInfo))
+                    .filter(([, scriptId]) => Boolean(scriptId))
+                    .map(([id, scriptId]) => [id, TabManager.documents[scriptId]] as [string, DocumentInfo])
                     .filter(([, {state}]) => state === DocumentState.ACTIVE || state === DocumentState.PASSIVE)
                     .forEach(async ([id, {url, documentId}]) => {
                         const frameId = Number(id);
@@ -361,7 +375,7 @@ export default class TabManager {
                             setTimeout(() => TabManager.sendDocumentMessage(documentId, tab.id!, frameId, message));
                         }
                         if (TabManager.tabs[tab.id!][frameId]) {
-                            TabManager.tabs[tab.id!][frameId].timestamp = TabManager.timestamp;
+                            TabManager.documents[TabManager.tabs[tab.id!][frameId]].timestamp = TabManager.timestamp;
                         }
                     });
             });
@@ -377,7 +391,10 @@ export default class TabManager {
         if (!tab) {
             return null;
         }
-        return TabManager.tabs[tab.id!] && TabManager.tabs[tab.id!][0] && TabManager.tabs[tab.id!][0].darkThemeDetected || null;
+        return TabManager.tabs[tab.id!] &&
+            TabManager.tabs[tab.id!][0] &&
+            TabManager.documents[TabManager.tabs[tab.id!][0]] &&
+            TabManager.documents[TabManager.tabs[tab.id!][0]].darkThemeDetected || null;
     }
 
     public static async getActiveTabURL(): Promise<string> {
