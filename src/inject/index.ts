@@ -7,11 +7,14 @@ import {isSystemDarkModeEnabled, runColorSchemeChangeDetector, stopColorSchemeCh
 import {collectCSS} from './dynamic-theme/css-collection';
 import type {DynamicThemeFix, MessageBGtoCS, MessageCStoBG, MessageCStoUI, MessageUItoCS, Theme} from '../definitions';
 import {MessageTypeBGtoCS, MessageTypeCStoBG, MessageTypeCStoUI, MessageTypeUItoCS} from '../utils/message';
+import {generateUID} from '../utils/uid';
 
 declare const __TEST__: boolean;
 
 let unloaded = false;
+let darkThemeDetected = false;
 
+const scriptId = generateUID();
 let darkReaderDynamicThemeStateForTesting: 'loading' | 'ready' = 'loading';
 
 declare const __CHROMIUM_MV3__: boolean;
@@ -71,6 +74,10 @@ function sendMessage(message: MessageCStoBG | MessageCStoUI) {
             console.log('Dark Reader: unexpected error during message passing.');
         }
     }
+}
+
+function sendMessageToBG(type: MessageTypeCStoBG, data?: any) {
+    sendMessage({scriptId, type, data});
 }
 
 function onMessage({type, data}: MessageBGtoCS | MessageUItoCS & {data: any}) {
@@ -145,29 +152,28 @@ function onMessage({type, data}: MessageBGtoCS | MessageUItoCS & {data: any}) {
     }
 }
 
-runColorSchemeChangeDetector((isDark) =>
-    sendMessage({type: MessageTypeCStoBG.COLOR_SCHEME_CHANGE, data: {isDark}})
-);
+runColorSchemeChangeDetector((isDark) => sendMessageToBG(MessageTypeCStoBG.COLOR_SCHEME_CHANGE, {isDark}));
 
 chrome.runtime.onMessage.addListener(onMessage);
-sendMessage({type: MessageTypeCStoBG.DOCUMENT_CONNECT, data: {isDark: isSystemDarkModeEnabled()}});
+sendMessageToBG(MessageTypeCStoBG.DOCUMENT_CONNECT, {isDark: isSystemDarkModeEnabled()});
 
 function onPageHide(e: PageTransitionEvent) {
     if (e.persisted === false) {
-        sendMessage({type: MessageTypeCStoBG.DOCUMENT_FORGET});
+        sendMessageToBG(MessageTypeCStoBG.DOCUMENT_FORGET);
     }
 }
 
 function onFreeze() {
-    sendMessage({type: MessageTypeCStoBG.DOCUMENT_FREEZE});
+    sendMessageToBG(MessageTypeCStoBG.DOCUMENT_FREEZE);
 }
 
 function onResume() {
-    sendMessage({type: MessageTypeCStoBG.DOCUMENT_RESUME, data: {isDark: isSystemDarkModeEnabled()}});
+    sendMessageToBG(MessageTypeCStoBG.DOCUMENT_RESUME, {isDark: isSystemDarkModeEnabled(), darkThemeDetected});
 }
 
 function onDarkThemeDetected() {
-    sendMessage({type: MessageTypeCStoBG.DARK_THEME_DETECTED});
+    darkThemeDetected = true;
+    sendMessageToBG(MessageTypeCStoBG.DARK_THEME_DETECTED);
 }
 
 // Thunderbird does not have "tabs", and emails aren't 'frozen' or 'cached'.

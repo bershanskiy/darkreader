@@ -1,15 +1,22 @@
 import {MessageTypeCStoBG} from '../../utils/message';
-import type {MessageCStoBG} from '../../definitions';
+import type {MessageCStoBG, scriptId} from '../../definitions';
+import {generateUID} from '../../utils/uid';
 
 declare const __DEBUG__: boolean;
 declare const __TEST__: boolean;
 declare const __WATCH__: boolean;
 declare const __LOG__: 'info' | 'warn';
 
+// Initialize only on first use to facilitate treeshaking
+let scriptId: scriptId;
+
 function sendLogToBG(level: 'info' | 'warn' | 'assert', ...args: any[]) {
     if (__WATCH__ && __LOG__ && (__LOG__ === 'info' || level === 'warn')) {
+        if (!scriptId) {
+            scriptId = generateUID();
+        }
         // No need to generate contextId since we do not expect a response
-        chrome.runtime.sendMessage<MessageCStoBG>({type: MessageTypeCStoBG.LOG, data: {level, log: args}});
+        chrome.runtime.sendMessage<MessageCStoBG>({scriptId, type: MessageTypeCStoBG.LOG, data: {level, log: args}});
     }
 }
 

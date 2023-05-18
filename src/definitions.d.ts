@@ -11,6 +11,7 @@ export type ColorScheme = 'dark' | 'light';
 export type documentId = string;
 export type tabId = number;
 export type frameId = number;
+export type scriptId = string;
 
 export interface ExtensionData {
     isEnabled: boolean;
@@ -144,6 +145,7 @@ export interface TabInfo {
 export interface MessageCStoBG {
     id?: string;
     type: MessageTypeCStoBG;
+    scriptId: scriptId;
     data?: any;
 }
 

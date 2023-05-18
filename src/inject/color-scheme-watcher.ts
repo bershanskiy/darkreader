@@ -2,11 +2,14 @@ import {isSystemDarkModeEnabled, runColorSchemeChangeDetector, stopColorSchemeCh
 import type {MessageBGtoCS, MessageCStoBG} from '../definitions';
 import {MessageTypeCStoBG} from '../utils/message';
 import {setDocumentVisibilityListener, documentIsVisible, removeDocumentVisibilityListener} from '../utils/visibility';
+import {generateUID} from '../utils/uid';
 
 function cleanup() {
     stopColorSchemeChangeDetector();
     removeDocumentVisibilityListener();
 }
+
+const scriptId = generateUID();
 
 function sendMessage(message: MessageCStoBG): void {
     const responseHandler = (response: MessageBGtoCS | 'unsupportedSender' | undefined) => {
@@ -40,7 +43,7 @@ function sendMessage(message: MessageCStoBG): void {
 }
 
 function notifyOfColorScheme(isDark: boolean): void {
-    sendMessage({type: MessageTypeCStoBG.COLOR_SCHEME_CHANGE, data: {isDark}});
+    sendMessage({scriptId, type: MessageTypeCStoBG.COLOR_SCHEME_CHANGE, data: {isDark}});
 }
 
 function updateEventListeners(): void {

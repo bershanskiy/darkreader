@@ -9,6 +9,8 @@ interface FetchRequest {
     origin?: string;
 }
 
+const scriptId = generateUID();
+
 const resolvers = new Map<string, (data: string) => void>();
 const rejectors = new Map<string, (reason?: any) => void>();
 
@@ -17,7 +19,7 @@ export async function bgFetch(request: FetchRequest): Promise<string> {
         const id = generateUID();
         resolvers.set(id, resolve);
         rejectors.set(id, reject);
-        chrome.runtime.sendMessage<MessageCStoBG>({type: MessageTypeCStoBG.FETCH, data: request, id});
+        chrome.runtime.sendMessage<MessageCStoBG>({scriptId, type: MessageTypeCStoBG.FETCH, data: request, id});
     });
 }
 

@@ -23,6 +23,7 @@ interface TabManagerOptions {
 
 interface DocumentInfo {
     documentId: documentId | null;
+    scriptId: string;
     url: string | null;
     state: DocumentState;
     timestamp: number;
@@ -91,10 +92,10 @@ export default class TabManager {
                 const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__) ? (sender as any).documentId : ((__FIREFOX_MV2__ || __THUNDERBIRD__) ? (sender as any).contextId : null);
 
                 TabManager.getConnectionMessage(tabURL, url, frameId === 0)
-                        .then((message) => message && TabManager.sendMessageResponse(documentId, tabId, frameId!, message, sendResponse));
+                    .then((message) => message && TabManager.sendDocumentMessage(documentId, tabId, frameId!, message));
 
                 // No need to await
-                TabManager.recordDocumentAdd(documentId, tabId, frameId!, url);
+                TabManager.recordDocumentAdd(message.scriptId, documentId, tabId, frameId!, url);
                 break;
             }
 
@@ -121,13 +122,13 @@ export default class TabManager {
                     const tabURL = sender.tab!.url!;
                     const isTopFrame = frameId === 0;
                     const message = TabManager.getTabMessage(tabURL, url, isTopFrame);
-                    TabManager.sendMessageResponse(sender.documentId, tabId, frameId, message, sendResponse);
+                    TabManager.sendDocumentMessage(sender.documentId, tabId, frameId, message);
                 } else {
                     if (__CHROMIUM_MV2__) {
                         sendResponse({type: '¯\\_(ツ)_/¯'});
                     }
                 }
-                TabManager.recordDocumentResume(sender);
+                TabManager.recordDocumentResume(message.scriptId, sender, message.data.darkThemeDetected);
                 return needsUpdate;
             }
 
@@ -137,7 +138,7 @@ export default class TabManager {
 
             case MessageTypeCStoBG.FETCH: {
                 const respond = (data: any, error: any) =>
-                    TabManager.sendMessageResponse(sender.documentId, sender.tab!.id!, sender.frameId!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id: message.id, data, error}, sendResponse);
+                    TabManager.sendDocumentMessage(sender.documentId, sender.tab!.id!, sender.frameId!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id: message.id, data, error});
 
                 if (__THUNDERBIRD__) {
                     // In thunderbird some CSS is loaded on a chrome:// URL.
@@ -183,9 +184,8 @@ export default class TabManager {
         }
     }
 
-    private static sendMessageResponse(documentId: documentId | null | undefined, tabId: tabId, frameId: frameId, message: MessageBGtoCS, sendResponse?: (message: MessageBGtoCS) => void): void {
+    private static sendDocumentMessage(documentId: documentId | null | undefined, tabId: tabId, frameId: frameId, message: MessageBGtoCS): void {
         ASSERT('Message must be non-empty to be sent', message);
-        sendResponse && sendResponse(message);
         try {
             chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && documentId) ? {frameId, documentId} as chrome.tabs.MessageSendOptions : {frameId});
         } catch (e) {
@@ -205,7 +205,7 @@ export default class TabManager {
         }
     }
 
-    private static async recordDocumentAdd(documentId: documentId, tabId: tabId, frameId: frameId, url: string) {
+    private static async recordDocumentAdd(scriptId: string, documentId: documentId, tabId: tabId, frameId: frameId, url: string) {
         let frames: {[frameId: frameId]: DocumentInfo};
         await TabManager.stateManager.loadState();
         if (TabManager.tabs[tabId]) {
@@ -216,6 +216,7 @@ export default class TabManager {
         }
         frames[frameId] = {
             documentId,
+            scriptId,
             url,
             state: DocumentState.ACTIVE,
             darkThemeDetected: false,
@@ -234,15 +235,16 @@ export default class TabManager {
         await TabManager.stateManager.saveState();
     }
 
-    private static async recordDocumentResume(sender: chrome.runtime.MessageSender) {
+    private static async recordDocumentResume(scriptId: string, sender: chrome.runtime.MessageSender, darkThemeDetected: boolean) {
         await TabManager.stateManager.loadState();
         const url = sender.url!;
         const documentId: documentId = (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && (sender as any).documentId) ? (sender as any).documentId : null;
         TabManager.tabs[sender.tab!.id!][sender.frameId!] = {
             documentId,
+            scriptId,
             url,
             state: DocumentState.ACTIVE,
-            darkThemeDetected: false,
+            darkThemeDetected,
             timestamp: TabManager.timestamp,
         };
         TabManager.stateManager.saveState();
@@ -354,9 +356,9 @@ export default class TabManager {
 
                         const message = TabManager.getTabMessage(tabURL, url!, frameId === 0);
                         if (tab.active && frameId === 0) {
-                            TabManager.sendMessageResponse(documentId, tab.id!, frameId, message);
+                            TabManager.sendDocumentMessage(documentId, tab.id!, frameId, message);
                         } else {
-                            setTimeout(() => TabManager.sendMessageResponse(documentId, tab.id!, frameId, message));
+                            setTimeout(() => TabManager.sendDocumentMessage(documentId, tab.id!, frameId, message));
                         }
                         if (TabManager.tabs[tab.id!][frameId]) {
                             TabManager.tabs[tab.id!][frameId].timestamp = TabManager.timestamp;
