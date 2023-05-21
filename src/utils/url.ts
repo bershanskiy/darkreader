@@ -184,25 +184,20 @@ function createUrlRegex(urlTemplate: string): RegExp | null {
 }
 
 export function isPDF(url: string): boolean {
-    if (url.includes('.pdf')) {
-        if (url.includes('?')) {
-            url = url.substring(0, url.lastIndexOf('?'));
-        }
-        if (url.includes('#')) {
-            url = url.substring(0, url.lastIndexOf('#'));
-        }
+    const {hostname, pathname} = new URL(url);
+    if (pathname.includes('.pdf')) {
         if (
-            (url.match(/(wikipedia|wikimedia)\.org/i) && url.match(/(wikipedia|wikimedia)\.org\/.*\/[a-z]+\:[^\:\/]+\.pdf/i)) ||
-            (url.match(/timetravel\.mementoweb\.org\/reconstruct/i) && url.match(/\.pdf$/i)) ||
-            (url.match(/dropbox\.com\/s\//i) && url.match(/\.pdf$/i))
+            (hostname.match(/(wikipedia|wikimedia)\.org$/i) && pathname.match(/^\/.*\/[a-z]+\:[^\:\/]+\.pdf/i)) ||
+            (hostname.match(/timetravel\.mementoweb\.org$/i) && pathname.match(/^\/reconstruct/i) && pathname.match(/\.pdf$/i)) ||
+            (hostname.match(/dropbox\.com$/i) && pathname.match(/^\/s\//i) && pathname.match(/\.pdf$/i))
         ) {
             return false;
         }
-        if (url.endsWith('.pdf')) {
-            for (let i = url.length; i > 0; i--) {
-                if (url[i] === '=') {
+        if (pathname.endsWith('.pdf')) {
+            for (let i = pathname.length; i > 0; i--) {
+                if (pathname[i] === '=') {
                     return false;
-                } else if (url[i] === '/') {
+                } else if (pathname[i] === '/') {
                     return true;
                 }
             }
