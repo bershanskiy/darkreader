@@ -241,13 +241,7 @@ export class Extension {
     private static getMessengerAdapter(): ExtensionAdapter {
         return {
             collect: async () => {
-<<<<<<< HEAD
-                const data = await this.collectData();
-                console.error(data)
-                return data;
-=======
                 return await Extension.collectData();
->>>>>>> origin/main
             },
             collectDevToolsData: async () => {
                 return await Extension.collectDevToolsData();
