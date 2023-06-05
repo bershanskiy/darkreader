@@ -147,11 +147,11 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
 }
 
 runColorSchemeChangeDetector((isDark) =>
-    sendMessage({type: MessageTypeCStoBG.COLOR_SCHEME_CHANGE, data: {isDark}})
+    sendMessage({type: MessageTypeCStoBG.COLOR_SCHEME_CHANGE, isDark})
 );
 
 chrome.runtime.onMessage.addListener(onMessage);
-sendMessage({type: MessageTypeCStoBG.FRAME_CONNECT, data: {isDark: isSystemDarkModeEnabled()}});
+sendMessage({type: MessageTypeCStoBG.FRAME_CONNECT, isDark: isSystemDarkModeEnabled()});
 
 function onPageHide(e: PageTransitionEvent) {
     if (e.persisted === false) {
@@ -164,7 +164,7 @@ function onFreeze() {
 }
 
 function onResume() {
-    sendMessage({type: MessageTypeCStoBG.FRAME_RESUME, data: {isDark: isSystemDarkModeEnabled()}});
+    sendMessage({type: MessageTypeCStoBG.FRAME_RESUME, isDark: isSystemDarkModeEnabled()});
 }
 
 function onDarkThemeDetected() {

@@ -70,7 +70,7 @@ export default class TabManager {
             }
             switch (message.type) {
                 case MessageTypeCStoBG.FRAME_CONNECT: {
-                    TabManager.onColorSchemeMessage(message, sender);
+                    TabManager.onColorSchemeMessage(message.isDark, sender);
                     await TabManager.stateManager.loadState();
                     const reply = (tabURL: string, url: string, isTopFrame: boolean) => {
                         getConnectionMessage(tabURL, url, isTopFrame).then((message) => {
@@ -129,7 +129,7 @@ export default class TabManager {
                 }
 
                 case MessageTypeCStoBG.FRAME_RESUME: {
-                    TabManager.onColorSchemeMessage(message, sender);
+                    TabManager.onColorSchemeMessage(message.isDark, sender);
                     await TabManager.stateManager.loadState();
                     const tabId = sender.tab!.id!;
                     const tabURL = sender.tab!.url!;
@@ -188,7 +188,7 @@ export default class TabManager {
                 case MessageTypeUItoBG.COLOR_SCHEME_CHANGE:
                     // fallthrough
                 case MessageTypeCStoBG.COLOR_SCHEME_CHANGE:
-                    TabManager.onColorSchemeMessage(message as MessageCStoBG, sender);
+                    TabManager.onColorSchemeMessage((message as any).isDark || (message as any).data.isDark, sender);
                     break;
 
                 case MessageTypeUItoBG.SAVE_FILE: {
@@ -211,7 +211,7 @@ export default class TabManager {
         chrome.tabs.onRemoved.addListener(async (tabId) => TabManager.removeFrame(tabId, 0));
     }
 
-    private static onColorSchemeMessage(message: MessageCStoBG, sender: chrome.runtime.MessageSender) {
+    private static onColorSchemeMessage(isDark: boolean, sender: chrome.runtime.MessageSender) {
         ASSERT('TabManager.onColorSchemeMessage is set', () => Boolean(TabManager.onColorSchemeChange));
 
         // We honor only messages which come from tab's top frame
@@ -219,7 +219,7 @@ export default class TabManager {
         // TODO(MV3): instead of dropping these messages, consider making a query to an authoritative source
         // like offscreen document
         if (sender && sender.frameId === 0) {
-            TabManager.onColorSchemeChange(message.data.isDark);
+            TabManager.onColorSchemeChange(isDark);
         }
     }
 

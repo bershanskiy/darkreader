@@ -143,11 +143,33 @@ export interface TabInfo {
     isDarkThemeDetected: boolean | null;
 }
 
-export interface MessageCStoBG {
-    id?: string;
-    type: MessageTypeCStoBG;
-    data?: any;
-}
+export type MessageCStoBG = {
+    type: MessageTypeCStoBG.COLOR_SCHEME_CHANGE;
+    isDark: boolean;
+} | {
+    type: MessageTypeCStoBG.DARK_THEME_DETECTED;
+} | {
+    type: MessageTypeCStoBG.DARK_THEME_NOT_DETECTED;
+} | {
+    type: MessageTypeCStoBG.FETCH;
+    id: string;
+    data: {
+        url: string;
+        responseType: 'data-url' | 'text';
+        mimeType?: string;
+        origin?: string;
+    }
+} | {
+    type: MessageTypeCStoBG.FRAME_CONNECT;
+    isDark: boolean;
+} | {
+    type: MessageTypeCStoBG.FRAME_FORGET;
+} | {
+    type: MessageTypeCStoBG.FRAME_FREEZE;
+} | {
+    type: MessageTypeCStoBG.FRAME_RESUME;
+    isDark: boolean;
+};
 
 export interface MessageUItoCS {
     type: MessageTypeUItoCS;

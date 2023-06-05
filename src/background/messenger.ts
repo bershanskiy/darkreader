@@ -69,7 +69,7 @@ export default class Messenger {
             case MessageTypeUItoBG.APPLY_DEV_INVERSION_FIXES:
             case MessageTypeUItoBG.APPLY_DEV_STATIC_THEMES:
                 promise = new Promise((resolve, reject) => {
-                    port.onMessage.addListener((message: MessageUItoBG | MessageCStoBG) => {
+                    port.onMessage.addListener((message: MessageUItoBG) => {
                         const {data} = message;
                         let error: Error;
                         switch (port.name) {

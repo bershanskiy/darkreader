@@ -40,7 +40,7 @@ function sendMessage(message: MessageCStoBG): void {
 }
 
 function notifyOfColorScheme(isDark: boolean): void {
-    sendMessage({type: MessageTypeCStoBG.COLOR_SCHEME_CHANGE, data: {isDark}});
+    sendMessage({type: MessageTypeCStoBG.COLOR_SCHEME_CHANGE, isDark});
 }
 
 function updateEventListeners(): void {
