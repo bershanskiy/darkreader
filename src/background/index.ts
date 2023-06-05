@@ -1,50 +1,14 @@
 import {Extension} from './extension';
 import {getHelpURL, UNINSTALL_URL} from '../utils/links';
 import {canInjectScript} from '../background/utils/extension-api';
-import type {ColorScheme, DebugMessageBGtoCS, DebugMessageBGtoUI, DebugMessageCStoBG, ExtensionData, UserSettings} from '../definitions';
+import type {DebugMessageBGtoCS, DebugMessageBGtoUI, DebugMessageCStoBG, ExtensionData} from '../definitions';
 import {DebugMessageTypeBGtoCS, DebugMessageTypeBGtoUI, DebugMessageTypeCStoBG} from '../utils/message';
 import {makeChromiumHappy} from './make-chromium-happy';
 import {ASSERT, logInfo} from './utils/log';
 import {sendLog} from './utils/sendLog';
 import {isFirefox} from '../utils/platform';
 import {emulateColorScheme, isSystemDarkModeEnabled} from '../utils/media-query';
-
-type TestMessage = {
-    type: 'getManifest';
-    id: number;
-} | {
-    type: 'changeSettings';
-    data: Partial<UserSettings>;
-    id: number;
-} | {
-    type: 'collectData';
-    id: number;
-} | {
-    type: 'getChromeStorage';
-    data: {
-        region: 'local' | 'sync';
-        keys: string | string[];
-    };
-    id: number;
-} | {
-    type: 'changeChromeStorage';
-    data: {
-        region: 'local' | 'sync';
-        data: {[key: string]: any};
-    };
-    id: number;
-} | {
-    type: 'firefox-createTab';
-    data: string;
-    id: number;
-} | {
-    type: 'firefox-getColorScheme';
-    id: number;
-} | {
-    type: 'firefox-emulateColorScheme';
-    data: ColorScheme;
-    id: number;
-};
+import {TestMessage} from '../utils/test-message';
 
 // Start extension
 const extension = Extension.start();
