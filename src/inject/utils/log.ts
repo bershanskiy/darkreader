@@ -1,12 +1,12 @@
 import {DebugMessageTypeCStoBG} from '../../utils/message';
-import type {DebugMessageCStoBG} from '../../definitions';
+import type {DebugMessageCStoBG, LogLevel} from '../../definitions';
 
 declare const __DEBUG__: boolean;
 declare const __TEST__: boolean;
 declare const __WATCH__: boolean;
 declare const __LOG__: 'info' | 'warn';
 
-function sendLogToBG(level: 'info' | 'warn' | 'assert', ...args: any[]) {
+function sendLogToBG(level: LogLevel, ...args: any[]) {
     if (__WATCH__ && __LOG__ && (__LOG__ === 'info' || level === 'warn')) {
         // No need to generate contextId since we do not expect a response
         chrome.runtime.sendMessage<DebugMessageCStoBG>({type: DebugMessageTypeCStoBG.LOG, data: {level, log: args}});

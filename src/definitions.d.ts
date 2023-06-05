@@ -6,13 +6,15 @@ import type {ThemeEngine} from './generators/theme-engines';
 
 export type ColorScheme = 'dark' | 'light';
 
+export type LogLevel = 'info' | 'warn' | 'assert';
+
 // ContextId is a number on Firefox and documentId is a string in Chromium,
 // let's use string for simplicity
 export type documentId = string;
 export type tabId = number;
 export type frameId = number;
 
-export interface ExtensionData {
+export type ExtensionData = {
     isEnabled: boolean;
     isReady: boolean;
     isAllowedFileSchemeAccess: boolean;
@@ -25,13 +27,13 @@ export interface ExtensionData {
     uiHighlights: string[];
 }
 
-export interface DevToolsData {
+export type DevToolsData = {
     dynamicFixesText: string;
     filterFixesText: string;
     staticThemesText: string;
 }
 
-export interface TabData {
+export type TabData = {
     type: MessageTypeBGtoCS;
     data?: any;
 }
@@ -53,12 +55,12 @@ export interface ExtensionActions {
     hideHighlights(ids: string[]): void;
 }
 
-export interface ExtWrapper {
+export type ExtWrapper = {
     data: ExtensionData;
     actions: ExtensionActions;
 }
 
-export interface Theme {
+export type Theme = {
     mode: FilterMode;
     brightness: number;
     contrast: number;
@@ -83,25 +85,25 @@ export interface Theme {
 
 export type FilterConfig = Theme;
 
-export interface CustomSiteConfig {
+export type CustomSiteConfig = {
     url: string[];
     theme: FilterConfig;
 }
 
-export interface ThemePreset {
+export type ThemePreset = {
     id: string;
     name: string;
     urls: string[];
     theme: Theme;
 }
 
-export interface Automation {
+export type Automation = {
     enabled: boolean;
     mode: AutomationMode;
     behavior: 'OnOff' | 'Scheme';
 }
 
-export interface UserSettings {
+export type UserSettings = {
     enabled: boolean;
     fetchNews: boolean;
     theme: FilterConfig;
@@ -123,17 +125,17 @@ export interface UserSettings {
     detectDarkTheme: boolean;
 }
 
-export interface TimeSettings {
+export type TimeSettings = {
     activation: string;
     deactivation: string;
 }
 
-export interface LocationSettings {
+export type LocationSettings = {
     latitude: number | null;
     longitude: number | null;
 }
 
-export interface TabInfo {
+export type TabInfo = {
     url: string;
     id: tabId | null;
     documentId: documentId | null;
@@ -171,51 +173,54 @@ export type MessageCStoBG = {
     isDark: boolean;
 };
 
-export interface MessageUItoCS {
-    type: MessageTypeUItoCS;
+export type MessageUItoCS = {
+    type: MessageTypeUItoCS.EXPORT_CSS;
 }
 
-export interface MessageCStoUI {
-    type: MessageTypeCStoUI;
-    data: any;
+export type MessageCStoUI = {
+    type: MessageTypeCStoUI.EXPORT_CSS_RESPONSE;
+    data: string;
 }
 
-export interface MessageBGtoCS {
+export type MessageBGtoCS = {
     id?: string;
     type: MessageTypeBGtoCS;
     data?: any;
     error?: any;
 }
 
-export interface MessageUItoBG {
+export type MessageUItoBG = {
     type: MessageTypeUItoBG;
     data?: any;
     error?: any;
 }
 
-export interface MessageBGtoUI {
+export type MessageBGtoUI = {
     type: MessageTypeBGtoUI;
     data?: any;
 }
 
-export interface DebugMessageBGtoCS {
+export type DebugMessageBGtoCS = {
     type: DebugMessageTypeBGtoCS;
 }
 
-export interface DebugMessageBGtoUI {
+export type DebugMessageBGtoUI = {
     type: DebugMessageTypeBGtoUI;
 }
 
-export interface DebugMessageCStoBG {
-    type: DebugMessageTypeCStoBG;
-    data?: any;
+export type DebugMessageCStoBG = {
+    type: DebugMessageTypeCStoBG.LOG;
+    data: {
+        level: LogLevel;
+        log: any[];
+    };
 }
 
-export interface Shortcuts {
+export type Shortcuts = {
     [name: string]: string;
 }
 
-export interface DynamicThemeFix {
+export type DynamicThemeFix = {
     url: string[];
     invert: string[];
     css: string;
@@ -225,7 +230,7 @@ export interface DynamicThemeFix {
     disableCustomElementRegistryProxy: boolean;
 }
 
-export interface InversionFix {
+export type InversionFix = {
     url: string[];
     invert: string[];
     noinvert: string[];
@@ -233,7 +238,7 @@ export interface InversionFix {
     css: string;
 }
 
-export interface StaticTheme {
+export type StaticTheme = {
     url: string[];
     neutralBg?: string[];
     neutralBgActive?: string[];
@@ -263,7 +268,7 @@ export interface StaticTheme {
     noCommon?: boolean;
 }
 
-export interface News {
+export type News = {
     id: string;
     date: string;
     url: string;
