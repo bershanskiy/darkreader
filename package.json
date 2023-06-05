@@ -63,7 +63,7 @@
     "@types/chrome": "0.0.237",
     "@types/eslint": "8.40.0",
     "@types/jasmine": "4.3.2",
-    "@types/jest": "29.5.1",
+    "@types/jest": "29.5.2",
     "@types/karma": "6.3.4",
     "@types/karma-coverage": "2.0.1",
     "@types/node": "20.2.5",
