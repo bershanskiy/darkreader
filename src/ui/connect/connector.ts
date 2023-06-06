@@ -18,7 +18,7 @@ export default class Connector implements ExtensionActions {
 
     private async sendRequest<T>(type: MessageTypeUItoBG, data?: string): Promise<T> {
         return new Promise<T>((resolve, reject) => {
-            chrome.runtime.sendMessage<MessageUItoBG>({type, data}, ({data, error}: MessageUItoBG) => {
+            chrome.runtime.sendMessage<MessageUItoBG>({type, data} as any, ({data, error}: MessageUItoBG) => {
                 if (error) {
                     reject(error);
                 } else {

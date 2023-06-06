@@ -70,7 +70,7 @@ export default class TabManager {
             }
             switch (message.type) {
                 case MessageTypeCStoBG.FRAME_CONNECT: {
-                    TabManager.onColorSchemeMessage(message.isDark, sender);
+                    TabManager.onColorSchemeMessage(message.data.isDark, sender);
                     await TabManager.stateManager.loadState();
                     const reply = (tabURL: string, url: string, isTopFrame: boolean) => {
                         getConnectionMessage(tabURL, url, isTopFrame).then((message) => {
@@ -129,7 +129,7 @@ export default class TabManager {
                 }
 
                 case MessageTypeCStoBG.FRAME_RESUME: {
-                    TabManager.onColorSchemeMessage(message.isDark, sender);
+                    TabManager.onColorSchemeMessage(message.data.isDark, sender);
                     await TabManager.stateManager.loadState();
                     const tabId = sender.tab!.id!;
                     const tabURL = sender.tab!.url!;

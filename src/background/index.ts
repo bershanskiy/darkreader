@@ -8,7 +8,7 @@ import {ASSERT, logInfo} from './utils/log';
 import {sendLog} from './utils/sendLog';
 import {isFirefox} from '../utils/platform';
 import {emulateColorScheme, isSystemDarkModeEnabled} from '../utils/media-query';
-import {TestMessage} from '../utils/test-message';
+import type {TestMessage} from '../utils/test-message';
 
 // Start extension
 const extension = Extension.start();

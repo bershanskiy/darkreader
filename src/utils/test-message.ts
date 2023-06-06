@@ -1,4 +1,4 @@
-import { ColorScheme, UserSettings } from '../definitions';
+import type {ColorScheme, UserSettings} from '../definitions';
 
 export type TestMessage = {
     id: number;

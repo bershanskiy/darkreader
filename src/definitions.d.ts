@@ -25,18 +25,18 @@ export type ExtensionData = {
     forcedScheme: 'dark' | 'light' | null;
     activeTab: TabInfo;
     uiHighlights: string[];
-}
+};
 
 export type DevToolsData = {
     dynamicFixesText: string;
     filterFixesText: string;
     staticThemesText: string;
-}
+};
 
 export type TabData = {
     type: MessageTypeBGtoCS;
     data?: any;
-}
+};
 
 export interface ExtensionActions {
     changeSettings(settings: Partial<UserSettings>): void;
@@ -58,7 +58,7 @@ export interface ExtensionActions {
 export type ExtWrapper = {
     data: ExtensionData;
     actions: ExtensionActions;
-}
+};
 
 export type Theme = {
     mode: FilterMode;
@@ -81,27 +81,27 @@ export type Theme = {
     lightColorScheme: string;
     darkColorScheme: string;
     immediateModify: boolean;
-}
+};
 
 export type FilterConfig = Theme;
 
 export type CustomSiteConfig = {
     url: string[];
     theme: FilterConfig;
-}
+};
 
 export type ThemePreset = {
     id: string;
     name: string;
     urls: string[];
     theme: Theme;
-}
+};
 
 export type Automation = {
     enabled: boolean;
     mode: AutomationMode;
     behavior: 'OnOff' | 'Scheme';
-}
+};
 
 export type UserSettings = {
     enabled: boolean;
@@ -123,17 +123,17 @@ export type UserSettings = {
     enableForProtectedPages: boolean;
     enableContextMenus: boolean;
     detectDarkTheme: boolean;
-}
+};
 
 export type TimeSettings = {
     activation: string;
     deactivation: string;
-}
+};
 
 export type LocationSettings = {
     latitude: number | null;
     longitude: number | null;
-}
+};
 
 export type TabInfo = {
     url: string;
@@ -143,11 +143,13 @@ export type TabInfo = {
     isInjected: boolean | null;
     isInDarkList: boolean;
     isDarkThemeDetected: boolean | null;
-}
+};
 
 export type MessageCStoBG = {
     type: MessageTypeCStoBG.COLOR_SCHEME_CHANGE;
-    isDark: boolean;
+    data: {
+        isDark: boolean;
+    };
 } | {
     type: MessageTypeCStoBG.DARK_THEME_DETECTED;
 } | {
@@ -160,53 +162,133 @@ export type MessageCStoBG = {
         responseType: 'data-url' | 'text';
         mimeType?: string;
         origin?: string;
-    }
+    };
 } | {
     type: MessageTypeCStoBG.FRAME_CONNECT;
-    isDark: boolean;
+    data: {
+        isDark: boolean;
+    };
 } | {
     type: MessageTypeCStoBG.FRAME_FORGET;
 } | {
     type: MessageTypeCStoBG.FRAME_FREEZE;
 } | {
     type: MessageTypeCStoBG.FRAME_RESUME;
-    isDark: boolean;
+    data: {
+        isDark: boolean;
+    };
 };
 
 export type MessageUItoCS = {
     type: MessageTypeUItoCS.EXPORT_CSS;
-}
+};
 
 export type MessageCStoUI = {
     type: MessageTypeCStoUI.EXPORT_CSS_RESPONSE;
     data: string;
-}
+};
 
 export type MessageBGtoCS = {
     id?: string;
     type: MessageTypeBGtoCS;
     data?: any;
     error?: any;
-}
+};
 
 export type MessageUItoBG = {
-    type: MessageTypeUItoBG;
+    type: MessageTypeUItoBG.APPLY_DEV_DYNAMIC_THEME_FIXES;
     data?: any;
     error?: any;
-}
+} | {
+    type: MessageTypeUItoBG.APPLY_DEV_INVERSION_FIXES;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.APPLY_DEV_STATIC_THEMES;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.CHANGE_SETTINGS;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.COLOR_SCHEME_CHANGE;
+    data: {
+        isDark: boolean;
+    };
+    error?: undefined;
+} | {
+    type: MessageTypeUItoBG.GET_DATA;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.GET_DEVTOOLS_DATA;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.HIDE_HIGHLIGHTS;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.LOAD_CONFIG;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.MARK_NEWS_AS_DISPLAYED;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.MARK_NEWS_AS_READ;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.RESET_DEV_DYNAMIC_THEME_FIXES;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.RESET_DEV_INVERSION_FIXES;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.RESET_DEV_STATIC_THEMES;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.SAVE_FILE;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.SET_THEME;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.SUBSCRIBE_TO_CHANGES;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.TOGGLE_ACTIVE_TAB;
+    data?: any;
+    error?: any;
+} | {
+    type: MessageTypeUItoBG.UNSUBSCRIBE_FROM_CHANGES;
+    data?: any;
+    error?: any;
+};
 
 export type MessageBGtoUI = {
     type: MessageTypeBGtoUI;
     data?: any;
-}
+};
 
 export type DebugMessageBGtoCS = {
-    type: DebugMessageTypeBGtoCS;
-}
+    type: DebugMessageTypeBGtoCS.CSS_UPDATE;
+} | {
+    type: DebugMessageTypeBGtoCS.RELOAD;
+};
 
 export type DebugMessageBGtoUI = {
     type: DebugMessageTypeBGtoUI;
-}
+};
 
 export type DebugMessageCStoBG = {
     type: DebugMessageTypeCStoBG.LOG;
@@ -214,11 +296,11 @@ export type DebugMessageCStoBG = {
         level: LogLevel;
         log: any[];
     };
-}
+};
 
 export type Shortcuts = {
     [name: string]: string;
-}
+};
 
 export type DynamicThemeFix = {
     url: string[];
@@ -228,7 +310,7 @@ export type DynamicThemeFix = {
     ignoreImageAnalysis: string[];
     disableStyleSheetsProxy: boolean;
     disableCustomElementRegistryProxy: boolean;
-}
+};
 
 export type InversionFix = {
     url: string[];
@@ -236,7 +318,7 @@ export type InversionFix = {
     noinvert: string[];
     removebg: string[];
     css: string;
-}
+};
 
 export type StaticTheme = {
     url: string[];
@@ -266,7 +348,7 @@ export type StaticTheme = {
     noImage?: string[];
     invert?: string[];
     noCommon?: boolean;
-}
+};
 
 export type News = {
     id: string;
@@ -277,7 +359,7 @@ export type News = {
     displayed?: boolean;
     badge?: string;
     icon?: string;
-}
+};
 
 // These values need to match those in Manifest
 export type Command = 'toggle' | 'addSite' | 'switchEngine';
