@@ -160,15 +160,15 @@ export default class TabManager {
                     // Using custom response due to Chrome and Firefox incompatibility
                     // Sometimes fetch error behaves like synchronous and sends `undefined`
                     const id = message.id;
-                    const sendResponse = (response: {data?: string | null; error?: string | null}) => {
-                        chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, data: response.data}, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && sender.documentId) ? {frameId: sender.frameId, documentId: sender.documentId} : {frameId: sender.frameId});
+                    const sendResponse = (data: string | null, error?: any | undefined) => {
+                        chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, data, error}, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && sender.documentId) ? {frameId: sender.frameId, documentId: sender.documentId} : {frameId: sender.frameId});
                     };
 
                     if (__THUNDERBIRD__) {
                         // In thunderbird some CSS is loaded on a chrome:// URL.
                         // Thunderbird restricted Add-ons to load those URL's.
                         if ((message.data.url as string).startsWith('chrome://')) {
-                            sendResponse({data: null});
+                            sendResponse(null);
                             return;
                         }
                     }
@@ -178,9 +178,9 @@ export default class TabManager {
                             TabManager.fileLoader = createFileLoader();
                         }
                         const response = await TabManager.fileLoader.get({url, responseType, mimeType, origin});
-                        sendResponse({data: response});
+                        sendResponse(response);
                     } catch (err) {
-                        sendResponse({error: err && err.message ? err.message : err});
+                        sendResponse(null, err && err.message ? err.message : err);
                     }
                     break;
                 }

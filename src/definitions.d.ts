@@ -259,10 +259,14 @@ export type MessageBGtoCS = {
 } | {
     id: string;
     type: MessageTypeBGtoCS.FETCH_RESPONSE;
-    data: any;
-    error?: any;
+    data: string | null;
+    error: undefined;
 } | {
-    id?: undefined;
+    id: string;
+    type: MessageTypeBGtoCS.FETCH_RESPONSE;
+    data: undefined;
+    error: any;
+} | {
     type: MessageTypeBGtoCS.UNSUPPORTED_SENDER;
     data?: undefined;
     error?: undefined;

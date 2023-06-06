@@ -21,16 +21,17 @@ export async function bgFetch(request: FetchRequest): Promise<string> {
     });
 }
 
-chrome.runtime.onMessage.addListener(({type, data, error, id}: MessageBGtoCS) => {
-    if (type === MessageTypeBGtoCS.FETCH_RESPONSE) {
-        const resolve = resolvers.get(id!);
-        const reject = rejectors.get(id!);
-        resolvers.delete(id!);
-        rejectors.delete(id!);
+chrome.runtime.onMessage.addListener((message: MessageBGtoCS) => {
+    if (message.type === MessageTypeBGtoCS.FETCH_RESPONSE) {
+        const {data, error, id} = message;
+        const resolve = resolvers.get(id);
+        const reject = rejectors.get(id);
+        resolvers.delete(id);
+        rejectors.delete(id);
         if (error) {
             reject && reject(error);
         } else {
-            resolve && resolve(data);
+            resolve && resolve(data!);
         }
     }
 });
