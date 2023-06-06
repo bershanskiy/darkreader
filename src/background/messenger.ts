@@ -74,13 +74,13 @@ export default class Messenger {
                         let error: Error;
                         switch (port.name) {
                             case MessageTypeUItoBG.APPLY_DEV_DYNAMIC_THEME_FIXES:
-                                error = Messenger.adapter.applyDevDynamicThemeFixes(data);
+                                error = Messenger.adapter.applyDevDynamicThemeFixes(data as string);
                                 break;
                             case MessageTypeUItoBG.APPLY_DEV_INVERSION_FIXES:
-                                error = Messenger.adapter.applyDevInversionFixes(data);
+                                error = Messenger.adapter.applyDevInversionFixes(data as string);
                                 break;
                             case MessageTypeUItoBG.APPLY_DEV_STATIC_THEMES:
-                                error = Messenger.adapter.applyDevStaticThemes(data);
+                                error = Messenger.adapter.applyDevStaticThemes(data as string);
                                 break;
                             default:
                                 throw new Error(`Unknown port name: ${port.name}`);

@@ -22,7 +22,7 @@ export default class Connector implements ExtensionActions {
                 if (error) {
                     reject(error);
                 } else {
-                    resolve(data);
+                    resolve(data as any);
                 }
             });
         });
