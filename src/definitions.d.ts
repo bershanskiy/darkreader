@@ -162,6 +162,72 @@ export type LocationSettings = {
     longitude: number | null;
 };
 
+export type Shortcuts = {
+    [name: string]: string;
+};
+
+export type DynamicThemeFix = {
+    url: string[];
+    invert: string[];
+    css: string;
+    ignoreInlineStyle: string[];
+    ignoreImageAnalysis: string[];
+    disableStyleSheetsProxy: boolean;
+    disableCustomElementRegistryProxy: boolean;
+};
+
+export type InversionFix = {
+    url: string[];
+    invert: string[];
+    noinvert: string[];
+    removebg: string[];
+    css: string;
+};
+
+export type StaticTheme = {
+    url: string[];
+    neutralBg?: string[];
+    neutralBgActive?: string[];
+    neutralText?: string[];
+    neutralTextActive?: string[];
+    neutralBorder?: string[];
+    redBg?: string[];
+    redBgActive?: string[];
+    redText?: string[];
+    redTextActive?: string[];
+    redBorder?: string[];
+    greenBg?: string[];
+    greenBgActive?: string[];
+    greenText?: string[];
+    greenTextActive?: string[];
+    greenBorder?: string[];
+    blueBg?: string[];
+    blueBgActive?: string[];
+    blueText?: string[];
+    blueTextActive?: string[];
+    blueBorder?: string[];
+    fadeBg?: string[];
+    fadeText?: string[];
+    transparentBg?: string[];
+    noImage?: string[];
+    invert?: string[];
+    noCommon?: boolean;
+};
+
+export type News = {
+    id: string;
+    date: string;
+    url: string;
+    headline: string;
+    read?: boolean;
+    displayed?: boolean;
+    badge?: string;
+    icon?: string;
+};
+
+// These values need to match those in Manifest
+export type Command = 'toggle' | 'addSite' | 'switchEngine';
+
 export type TabInfo = {
     url: string;
     id: tabId | null;
@@ -380,68 +446,40 @@ export type DebugMessageCStoBG = {
     };
 };
 
-export type Shortcuts = {
-    [name: string]: string;
+export type TestMessage = {
+    id: number;
+    type: 'getManifest';
+} | {
+    id: number;
+    type: 'changeSettings';
+    data: Partial<UserSettings>;
+} | {
+    id: number;
+    type: 'collectData';
+} | {
+    id: number;
+    type: 'getChromeStorage';
+    data: {
+        region: 'local' | 'sync';
+        keys: string | string[];
+    };
+} | {
+    id: number;
+    type: 'changeChromeStorage';
+    data: {
+        region: 'local' | 'sync' | 'session' | 'managed';
+        data: {[key: string]: any};
+    };
+} | {
+    id: number;
+    type: 'firefox-createTab';
+    data: string;
+} | {
+    id: number;
+    type: 'firefox-getColorScheme';
+} | {
+    id: number;
+    type: 'firefox-emulateColorScheme';
+    data: ColorScheme;
 };
 
-export type DynamicThemeFix = {
-    url: string[];
-    invert: string[];
-    css: string;
-    ignoreInlineStyle: string[];
-    ignoreImageAnalysis: string[];
-    disableStyleSheetsProxy: boolean;
-    disableCustomElementRegistryProxy: boolean;
-};
-
-export type InversionFix = {
-    url: string[];
-    invert: string[];
-    noinvert: string[];
-    removebg: string[];
-    css: string;
-};
-
-export type StaticTheme = {
-    url: string[];
-    neutralBg?: string[];
-    neutralBgActive?: string[];
-    neutralText?: string[];
-    neutralTextActive?: string[];
-    neutralBorder?: string[];
-    redBg?: string[];
-    redBgActive?: string[];
-    redText?: string[];
-    redTextActive?: string[];
-    redBorder?: string[];
-    greenBg?: string[];
-    greenBgActive?: string[];
-    greenText?: string[];
-    greenTextActive?: string[];
-    greenBorder?: string[];
-    blueBg?: string[];
-    blueBgActive?: string[];
-    blueText?: string[];
-    blueTextActive?: string[];
-    blueBorder?: string[];
-    fadeBg?: string[];
-    fadeText?: string[];
-    transparentBg?: string[];
-    noImage?: string[];
-    invert?: string[];
-    noCommon?: boolean;
-};
-
-export type News = {
-    id: string;
-    date: string;
-    url: string;
-    headline: string;
-    read?: boolean;
-    displayed?: boolean;
-    badge?: string;
-    icon?: string;
-};
-
-// These values need to match those in Manifest
-export type Command = 'toggle' | 'addSite' | 'switchEngine';
