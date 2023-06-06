@@ -160,8 +160,8 @@ export default class TabManager {
                     // Using custom response due to Chrome and Firefox incompatibility
                     // Sometimes fetch error behaves like synchronous and sends `undefined`
                     const id = message.id;
-                    const sendResponse = (response: Partial<MessageBGtoCS>) => {
-                        chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, data: response}, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && sender.documentId) ? {frameId: sender.frameId, documentId: sender.documentId} : {frameId: sender.frameId});
+                    const sendResponse = (response: {data?: string | null; error?: string | null}) => {
+                        chrome.tabs.sendMessage<MessageBGtoCS>(sender.tab!.id!, {type: MessageTypeBGtoCS.FETCH_RESPONSE, id, data: response.data}, (__CHROMIUM_MV3__ || __CHROMIUM_MV2__ && sender.documentId) ? {frameId: sender.frameId, documentId: sender.documentId} : {frameId: sender.frameId});
                     };
 
                     if (__THUNDERBIRD__) {
