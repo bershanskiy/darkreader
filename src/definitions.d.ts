@@ -259,12 +259,12 @@ export type MessageBGtoCS = {
 } | {
     id: string;
     type: MessageTypeBGtoCS.FETCH_RESPONSE;
-    data: string | null;
-    error: undefined;
+    data: string;
+    error: null;
 } | {
     id: string;
     type: MessageTypeBGtoCS.FETCH_RESPONSE;
-    data: undefined;
+    data: null;
     error: any;
 } | {
     type: MessageTypeBGtoCS.UNSUPPORTED_SENDER;
