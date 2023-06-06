@@ -341,86 +341,67 @@ export type MessageBGtoCS = {
 export type MessageUItoBG = {
     type: MessageTypeUItoBG.APPLY_DEV_DYNAMIC_THEME_FIXES;
     data: string;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.APPLY_DEV_INVERSION_FIXES;
     data: string;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.APPLY_DEV_STATIC_THEMES;
     data: string;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.CHANGE_SETTINGS;
     data: Partial<UserSettings>;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.COLOR_SCHEME_CHANGE;
     data: {
         isDark: boolean;
     };
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.GET_DATA;
     data?: undefined;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.GET_DEVTOOLS_DATA;
     data?: undefined;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.HIDE_HIGHLIGHTS;
     data: string[];
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.LOAD_CONFIG;
     data: {
         local: boolean;
     };
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.MARK_NEWS_AS_DISPLAYED;
     data: string[];
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.MARK_NEWS_AS_READ;
     data: string[];
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.RESET_DEV_DYNAMIC_THEME_FIXES;
     data?: undefined;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.RESET_DEV_INVERSION_FIXES;
     data?: undefined;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.RESET_DEV_STATIC_THEMES;
     data?: undefined;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.SAVE_FILE;
     data: {
         name: string;
         content: string;
     };
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.SET_THEME;
     data: Partial<Theme>;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.SUBSCRIBE_TO_CHANGES;
     data?: undefined;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.TOGGLE_ACTIVE_TAB;
     data?: undefined;
-    error?: undefined;
 } | {
     type: MessageTypeUItoBG.UNSUBSCRIBE_FROM_CHANGES;
     data?: undefined;
-    error?: undefined;
 };
 
 export type MessageBGtoUI = {

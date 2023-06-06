@@ -17,14 +17,11 @@ export default class Connector implements ExtensionActions {
     }
 
     private async sendRequest<T>(type: MessageTypeUItoBG, data?: string): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            chrome.runtime.sendMessage<MessageUItoBG>({type, data} as any, ({data, error}: MessageUItoBG) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(data as any);
-                }
-            });
+        return new Promise<T>((resolve) => {
+            chrome.runtime.sendMessage<MessageUItoBG>(
+                {type, data} as any,
+                ({data}: MessageUItoBG) => resolve(data as T)
+            );
         });
     }
 
