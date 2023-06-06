@@ -188,7 +188,7 @@ export default class TabManager {
                 case MessageTypeUItoBG.COLOR_SCHEME_CHANGE:
                     // fallthrough
                 case MessageTypeCStoBG.COLOR_SCHEME_CHANGE:
-                    TabManager.onColorSchemeMessage((message as any).isDark || (message as any).data.isDark, sender);
+                    TabManager.onColorSchemeMessage(message.data.isDark, sender);
                     break;
 
                 case MessageTypeUItoBG.SAVE_FILE: {
