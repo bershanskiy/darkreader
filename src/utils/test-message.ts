@@ -21,7 +21,7 @@ export type TestMessage = {
     id: number;
     type: 'changeChromeStorage';
     data: {
-        region: 'local' | 'sync';
+        region: 'local' | 'sync' | 'session' | 'managed';
         data: {[key: string]: any};
     };
 } | {
