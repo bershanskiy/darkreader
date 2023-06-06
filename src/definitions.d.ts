@@ -52,15 +52,15 @@ export type TabData = {
     data: {
         css: string;
         detectDarkTheme: boolean;
-    }
+    };
 } | {
     type: MessageTypeBGtoCS.ADD_DYNAMIC_THEME;
     data: {
-        theme: any;
+        theme: Theme;
         fixes: DynamicThemeFix[] | null;
         isIFrame: boolean;
         detectDarkTheme: boolean;
-    }
+    };
 } | {
     type: MessageTypeBGtoCS.CLEAN_UP;
 };
@@ -216,7 +216,7 @@ export type MessageCStoUI = {
 };
 
 export type MessageBGtoCS = {
-    id?: string;
+    id?: undefined;
     type: MessageTypeBGtoCS.ADD_CSS_FILTER;
     data: {
         css: string;
@@ -224,35 +224,48 @@ export type MessageBGtoCS = {
     };
     error?: undefined;
 } | {
-    id?: string;
+    id?: undefined;
     type: MessageTypeBGtoCS.ADD_DYNAMIC_THEME;
-    data?: any;
-    error?: any;
+    data: {
+        theme: Theme;
+        fixes: DynamicThemeFix[] | null;
+        isIFrame: boolean;
+        detectDarkTheme: boolean;
+    };
+    error?: undefined;
 } | {
-    id?: string;
+    id?: undefined;
     type: MessageTypeBGtoCS.ADD_STATIC_THEME;
-    data?: any;
-    error?: any;
+    data: {
+        css: string;
+        detectDarkTheme: boolean;
+    };
+    error?: undefined;
 } | {
-    id?: string;
+    id?: undefined;
     type: MessageTypeBGtoCS.ADD_SVG_FILTER;
-    data?: any;
-    error?: any;
+    data: {
+        css: string;
+        svgMatrix: string;
+        svgReverseMatrix: string;
+        detectDarkTheme: boolean;
+    };
+    error?: undefined;
 } | {
-    id?: string;
+    id?: undefined;
     type: MessageTypeBGtoCS.CLEAN_UP;
-    data?: any;
-    error?: any;
+    data?: undefined;
+    error?: undefined;
 } | {
-    id?: string;
+    id: string;
     type: MessageTypeBGtoCS.FETCH_RESPONSE;
-    data?: any;
+    data: any;
     error?: any;
 } | {
-    id?: string;
+    id?: undefined;
     type: MessageTypeBGtoCS.UNSUPPORTED_SENDER;
-    data?: any;
-    error?: any;
+    data?: undefined;
+    error?: undefined;
 };
 
 export type MessageUItoBG = {
@@ -283,7 +296,7 @@ export type MessageUItoBG = {
     error?: undefined;
 } | {
     type: MessageTypeUItoBG.GET_DEVTOOLS_DATA;
-    data?: any;
+    data?: undefined;
     error?: undefined;
 } | {
     type: MessageTypeUItoBG.HIDE_HIGHLIGHTS;

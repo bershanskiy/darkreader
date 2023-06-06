@@ -483,7 +483,7 @@ function isAnotherDarkReaderInstanceActive() {
     return false;
 }
 
-function selectRelevantFix(documentURL: string, fixes: DynamicThemeFix[]): DynamicThemeFix | null {
+function selectRelevantFix(documentURL: string, fixes: DynamicThemeFix[] | null): DynamicThemeFix | null {
     if (!fixes) {
         return null;
     }
@@ -499,7 +499,7 @@ function selectRelevantFix(documentURL: string, fixes: DynamicThemeFix[]): Dynam
 /**
  * TODO: expose this function to API builds via src/api function enable()
  */
-export function createOrUpdateDynamicTheme(filterConfig: FilterConfig, dynamicThemeFixes: DynamicThemeFix[], iframe: boolean): void {
+export function createOrUpdateDynamicTheme(filterConfig: FilterConfig, dynamicThemeFixes: DynamicThemeFix[] | null, iframe: boolean): void {
     const dynamicThemeFix = selectRelevantFix(document.location.href, dynamicThemeFixes);
 
     // Most websites will have only the generic fix applied ('*'), some will have generic fix and one site-specific fix (two in total),
