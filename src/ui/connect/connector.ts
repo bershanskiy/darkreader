@@ -102,7 +102,7 @@ export default class Connector implements ExtensionActions {
     }
 
     public toggleActiveTab(): void {
-        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.TOGGLE_ACTIVE_TAB, data: {}});
+        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.TOGGLE_ACTIVE_TAB});
     }
 
     public markNewsAsRead(ids: string[]): void {

@@ -34,8 +34,35 @@ export type DevToolsData = {
 };
 
 export type TabData = {
-    type: MessageTypeBGtoCS;
-    data?: any;
+    type: MessageTypeBGtoCS.ADD_CSS_FILTER;
+    data: {
+        css: string;
+        detectDarkTheme: boolean;
+    };
+} | {
+    type: MessageTypeBGtoCS.ADD_SVG_FILTER;
+    data: {
+        css: string;
+        svgMatrix: string;
+        svgReverseMatrix: string;
+        detectDarkTheme: boolean;
+    };
+} | {
+    type: MessageTypeBGtoCS.ADD_STATIC_THEME;
+    data: {
+        css: string;
+        detectDarkTheme: boolean;
+    }
+} | {
+    type: MessageTypeBGtoCS.ADD_DYNAMIC_THEME;
+    data: {
+        theme: any;
+        fixes: DynamicThemeFix[] | null;
+        isIFrame: boolean;
+        detectDarkTheme: boolean;
+    }
+} | {
+    type: MessageTypeBGtoCS.CLEAN_UP;
 };
 
 export interface ExtensionActions {
@@ -190,27 +217,60 @@ export type MessageCStoUI = {
 
 export type MessageBGtoCS = {
     id?: string;
-    type: MessageTypeBGtoCS;
+    type: MessageTypeBGtoCS.ADD_CSS_FILTER;
+    data: {
+        css: string;
+        detectDarkTheme: boolean;
+    };
+    error?: undefined;
+} | {
+    id?: string;
+    type: MessageTypeBGtoCS.ADD_DYNAMIC_THEME;
+    data?: any;
+    error?: any;
+} | {
+    id?: string;
+    type: MessageTypeBGtoCS.ADD_STATIC_THEME;
+    data?: any;
+    error?: any;
+} | {
+    id?: string;
+    type: MessageTypeBGtoCS.ADD_SVG_FILTER;
+    data?: any;
+    error?: any;
+} | {
+    id?: string;
+    type: MessageTypeBGtoCS.CLEAN_UP;
+    data?: any;
+    error?: any;
+} | {
+    id?: string;
+    type: MessageTypeBGtoCS.FETCH_RESPONSE;
+    data?: any;
+    error?: any;
+} | {
+    id?: string;
+    type: MessageTypeBGtoCS.UNSUPPORTED_SENDER;
     data?: any;
     error?: any;
 };
 
 export type MessageUItoBG = {
     type: MessageTypeUItoBG.APPLY_DEV_DYNAMIC_THEME_FIXES;
-    data?: any;
-    error?: any;
+    data: string;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.APPLY_DEV_INVERSION_FIXES;
-    data?: any;
-    error?: any;
+    data: string;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.APPLY_DEV_STATIC_THEMES;
-    data?: any;
-    error?: any;
+    data: string;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.CHANGE_SETTINGS;
-    data?: any;
-    error?: any;
+    data: Partial<UserSettings>;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.COLOR_SCHEME_CHANGE;
     data: {
@@ -219,65 +279,70 @@ export type MessageUItoBG = {
     error?: undefined;
 } | {
     type: MessageTypeUItoBG.GET_DATA;
-    data?: any;
-    error?: any;
+    data?: undefined;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.GET_DEVTOOLS_DATA;
     data?: any;
-    error?: any;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.HIDE_HIGHLIGHTS;
-    data?: any;
-    error?: any;
+    data: string[];
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.LOAD_CONFIG;
-    data?: any;
-    error?: any;
+    data: {
+        local: boolean;
+    };
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.MARK_NEWS_AS_DISPLAYED;
-    data?: any;
-    error?: any;
+    data: string[];
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.MARK_NEWS_AS_READ;
-    data?: any;
-    error?: any;
+    data: string[];
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.RESET_DEV_DYNAMIC_THEME_FIXES;
-    data?: any;
-    error?: any;
+    data?: undefined;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.RESET_DEV_INVERSION_FIXES;
-    data?: any;
-    error?: any;
+    data?: undefined;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.RESET_DEV_STATIC_THEMES;
-    data?: any;
-    error?: any;
+    data?: undefined;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.SAVE_FILE;
-    data?: any;
-    error?: any;
+    data: {
+        name: string;
+        content: string;
+    };
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.SET_THEME;
-    data?: any;
-    error?: any;
+    data: Partial<Theme>;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.SUBSCRIBE_TO_CHANGES;
-    data?: any;
-    error?: any;
+    data?: undefined;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.TOGGLE_ACTIVE_TAB;
-    data?: any;
-    error?: any;
+    data?: undefined;
+    error?: undefined;
 } | {
     type: MessageTypeUItoBG.UNSUBSCRIBE_FROM_CHANGES;
-    data?: any;
-    error?: any;
+    data?: undefined;
+    error?: undefined;
 };
 
 export type MessageBGtoUI = {
-    type: MessageTypeBGtoUI;
-    data?: any;
+    type: MessageTypeBGtoUI.CHANGES;
+    data: ExtensionData;
 };
 
 export type DebugMessageBGtoCS = {
@@ -287,7 +352,7 @@ export type DebugMessageBGtoCS = {
 };
 
 export type DebugMessageBGtoUI = {
-    type: DebugMessageTypeBGtoUI;
+    type: DebugMessageTypeBGtoUI.UPDATE;
 };
 
 export type DebugMessageCStoBG = {

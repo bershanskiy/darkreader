@@ -438,7 +438,7 @@ export class Extension {
         };
     }
 
-    private static async getConnectionMessage(tabURL: string, url: string, isTopFrame: boolean) {
+    private static async getConnectionMessage(tabURL: string, url: string, isTopFrame: boolean): Promise<TabData> {
         await Extension.loadData();
         return Extension.getTabMessage(tabURL, url, isTopFrame);
     }
