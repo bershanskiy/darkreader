@@ -282,7 +282,6 @@ export type MessageCStoUI = {
 };
 
 export type MessageBGtoCS = {
-    id?: undefined;
     type: MessageTypeBGtoCS.ADD_CSS_FILTER;
     data: {
         css: string;
@@ -290,7 +289,6 @@ export type MessageBGtoCS = {
     };
     error?: undefined;
 } | {
-    id?: undefined;
     type: MessageTypeBGtoCS.ADD_DYNAMIC_THEME;
     data: {
         theme: Theme;
@@ -300,7 +298,6 @@ export type MessageBGtoCS = {
     };
     error?: undefined;
 } | {
-    id?: undefined;
     type: MessageTypeBGtoCS.ADD_STATIC_THEME;
     data: {
         css: string;
@@ -308,7 +305,6 @@ export type MessageBGtoCS = {
     };
     error?: undefined;
 } | {
-    id?: undefined;
     type: MessageTypeBGtoCS.ADD_SVG_FILTER;
     data: {
         css: string;
@@ -318,7 +314,6 @@ export type MessageBGtoCS = {
     };
     error?: undefined;
 } | {
-    id?: undefined;
     type: MessageTypeBGtoCS.CLEAN_UP;
     data?: undefined;
     error?: undefined;
