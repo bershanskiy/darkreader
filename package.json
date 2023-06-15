@@ -93,7 +93,7 @@
     "malevic": "0.19.1",
     "prettier": "2.8.8",
     "puppeteer-core": "20.5.0",
-    "rollup": "3.24.1",
+    "rollup": "3.25.1",
     "rollup-plugin-istanbul": "4.0.0",
     "ts-jest": "29.1.0",
     "tslib": "2.5.3",
