@@ -57,7 +57,7 @@ const extension = Extension.start();
 const welcome = `  /''''\\
  (0)==(0)
 /__||||__\\
-Welcome to Dark Reader!`;
+Welcome to Dark Reader!!!`;
 console.log(welcome);
 
 declare const __DEBUG__: boolean;

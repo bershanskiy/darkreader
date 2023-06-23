@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - testnow
     paths-ignore:
       - 'src/config/*'
   pull_request:
@@ -35,21 +36,8 @@ jobs:
     strategy:
       matrix:
         include:
-
-          # Extended support releases
-          - channel: esr
-            firefox: latest-esr
-
-          # Stable releases
-          - channel: stable
-            chrome: stable
-            firefox: latest
-            coverage: true
-
-          # Beta releases
-          - channel: beta
-            chrome: beta
-            firefox: latest-beta
+          - browser: 'chrome'
+          - browser: 'firefox'
 
     runs-on: ubuntu-latest
 
@@ -57,28 +45,57 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Install Chrome
-        if: ${{ matrix.chrome }}
+      - name: Install Chrome Stable
+        id: chrome-stable
+        if: ${{ matrix.browser == 'chrome' }}
         uses: browser-actions/setup-chrome@latest
         with:
-          chrome-version: ${{ matrix.chrome }}
+          chrome-version: stable
+
+      - name: Install Chrome Beta
+        id: chrome-beta
+        if: ${{ matrix.browser == 'chrome' }}
+        uses: browser-actions/setup-chrome@latest
+        with:
+          chrome-version: beta
+
+      - name: Install Firefox ESR
+        id: firefox-esr
+        if: ${{ matrix.browser == 'firefox' }}
+        uses: browser-actions/setup-firefox@latest
+        with:
+          firefox-version: latest-esr
+
+      - name: Install Firefox Stable
+        id: firefox-stable
+        if: ${{ matrix.browser == 'firefox' }}
+        uses: browser-actions/setup-firefox@latest
+        with:
+          firefox-version: latest
+
+      - name: Install Firefox Beta
+        id: firefox-beta
+        if: ${{ matrix.browser == 'firefox' }}
+        uses: browser-actions/setup-firefox@latest
+        with:
+          firefox-version: latest-beta
+
+      - name: Configure Karma with path to Firefox executable
+        if: ${{ matrix.browser == 'firefox' }}
+        run: |
+          firefox --version
+          { echo FIREFOX_BIN="$(which firefox)"; echo FIREFOX_TEST=1; } | tee -a "$GITHUB_ENV"
+
+      - name: Echo
+        run: echo ${{ steps.chrome-stable.outputs.chrome-path }}
+      - name: Echo 2
+        run: echo ${{ steps.chrome-beta.outputs.chrome-path }}
 
       - name: Configure Karma with path to Chrome executable
         if: ${{ matrix.chrome }}
         run: |
           chrome --version
           { echo CHROME_BIN="$(which chrome)"; echo CHROME_TEST=1; } | tee -a "$GITHUB_ENV"
-
-      - name: Install Firefox
-        if: ${{ matrix.firefox }}
-        uses: browser-actions/setup-firefox@latest
-        with:
-          firefox-version: ${{ matrix.firefox }}
-      - name: Configure Karma with path to Firefox executable
-        if: ${{ matrix.firefox }}
-        run: |
-          firefox --version
-          { echo FIREFOX_BIN="$(which firefox)"; echo FIREFOX_TEST=1; } | tee -a "$GITHUB_ENV"
 
       - name: Node setup
         uses: actions/setup-node@v3
@@ -89,20 +106,19 @@ jobs:
       - name: Install NPM dependencies
         run: npm ci
 
-      - name: Deps
-        run: cat package-lock.json
-
       - name: Run injection tests
         run: npm run test:inject -- --ci --json --outputFile=test-results-inject.json
 
       - name: Run browser tests on Chromium MV2 build
-        if: ${{ matrix.chrome }}
+        if: ${{ matrix.browser == 'chrome' }}
         uses: coactions/setup-xvfb@v1
         with:
-          run: npm run test:chrome -- --json --outputFile=test-results-chrome.json
+          run: npm run test:chrome -- --json --outputFile=test-results-chrome-mv2.json
+        env:
+          CHROME_BIN: ${{ steps.chrome-stable.outputs.chrome-path }}
 
       - name: Run browser tests on Chromium MV3 build
-        if: ${{ matrix.chrome }}
+        if: ${{ matrix.browser == 'chrome' }}
         uses: coactions/setup-xvfb@v1
         with:
           run: npm run test:chrome-mv3 -- --json --outputFile=test-results-chrome-mv3.json
@@ -116,6 +132,6 @@ jobs:
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: test-results-chrome-${{ matrix.chrome }}-firefox-${{ matrix.firefox }}-coverage-${{ matrix.coverage }}
+          name: test-results-${{ matrix.browser }}
           path: test-results-*
           retention-days: ${{ inputs.test_results_retention_days }}
