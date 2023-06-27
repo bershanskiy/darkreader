@@ -80,7 +80,7 @@ jobs:
         with:
           firefox-version: latest-beta
 
-      - name: Configure Karma with path to Firefox executable
+      - name: Configure Karma with path to Firefox executable (TODO)
         if: ${{ matrix.browser == 'firefox' }}
         run: |
           firefox --version
@@ -91,8 +91,8 @@ jobs:
       - name: Echo 2
         run: echo ${{ steps.chrome-beta.outputs.chrome-path }}
 
-      - name: Configure Karma with path to Chrome executable
-        if: ${{ matrix.chrome }}
+      - name: Configure Karma with path to Chrome executable (TODO)
+        if: ${{ matrix.browser == 'chrome' }}
         run: |
           chrome --version
           { echo CHROME_BIN="$(which chrome)"; echo CHROME_TEST=1; } | tee -a "$GITHUB_ENV"
@@ -107,24 +107,34 @@ jobs:
         run: npm ci
 
       - name: Run injection tests
+        env:
+          # TODO
+          CHROME_BIN: ${{ steps.chrome-stable.outputs.chrome-path }}
+          FIREFOX_BIN: ${{ steps.firefox-stable.outputs.chrome-path }}
+          CHROME_TEST: ${{ matrix.browser == 'chrome' }}
+          FIREFOX_TEST: ${{ matrix.browser == 'firefox' }}
         run: npm run test:inject -- --ci --json --outputFile=test-results-inject.json
 
       - name: Run browser tests on Chromium MV2 build
         if: ${{ matrix.browser == 'chrome' }}
+        env:
+          CHROME_BIN: ${{ steps.chrome-stable.outputs.chrome-path }}
         uses: coactions/setup-xvfb@v1
         with:
           run: npm run test:chrome -- --json --outputFile=test-results-chrome-mv2.json
-        env:
-          CHROME_BIN: ${{ steps.chrome-stable.outputs.chrome-path }}
 
       - name: Run browser tests on Chromium MV3 build
         if: ${{ matrix.browser == 'chrome' }}
+        env:
+          CHROME_BIN: ${{ steps.chrome-stable.outputs.chrome-path }}
         uses: coactions/setup-xvfb@v1
         with:
           run: npm run test:chrome-mv3 -- --json --outputFile=test-results-chrome-mv3.json
 
       - name: Run browser tests on Firefox MV2 build
-        if: ${{ matrix.firefox }}
+        if: ${{ matrix.browser == 'firefox' }}
+        env:
+          FIREFOX_BIN: ${{ steps.firefox-stable.outputs.chrome-path }}
         uses: coactions/setup-xvfb@v1
         with:
           run: npm run test:firefox -- --json --outputFile=test-results-firefox-mv2.json
