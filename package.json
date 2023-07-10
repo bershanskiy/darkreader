@@ -77,7 +77,7 @@
     "eslint-plugin-import": "2.27.5",
     "eslint-plugin-local": "1.0.0",
     "get-stream": "7.0.0",
-    "globby": "13.2.0",
+    "globby": "13.2.2",
     "jasmine-core": "5.0.1",
     "jest": "29.5.0",
     "jest-extended": "4.0.0",
