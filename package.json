@@ -71,7 +71,7 @@
     "@types/offscreencanvas": "2019.7.0",
     "@types/ws": "8.5.5",
     "@typescript-eslint/eslint-plugin": "6.2.0",
-    "@typescript-eslint/parser": "6.2.0",
+    "@typescript-eslint/parser": "6.2.1",
     "chokidar": "3.5.3",
     "eslint": "8.46.0",
     "eslint-plugin-compat": "4.1.4",
