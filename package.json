@@ -62,7 +62,7 @@
     "@rollup/plugin-typescript": "11.1.2",
     "@rollup/pluginutils": "5.0.2",
     "@types/chrome": "0.0.242",
-    "@types/eslint": "8.44.1",
+    "@types/eslint": "8.44.2",
     "@types/jasmine": "4.3.5",
     "@types/jest": "29.5.3",
     "@types/karma": "6.3.4",
