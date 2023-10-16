@@ -60,7 +60,7 @@
     "@rollup/plugin-node-resolve": "15.2.0",
     "@rollup/plugin-replace": "5.0.2",
     "@rollup/plugin-typescript": "11.1.2",
-    "@rollup/pluginutils": "5.0.3",
+    "@rollup/pluginutils": "5.0.5",
     "@types/chrome": "0.0.243",
     "@types/eslint": "8.44.2",
     "@types/jasmine": "4.3.5",
