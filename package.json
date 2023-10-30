@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.2.3",
-    "@rollup/plugin-replace": "5.0.4",
+    "@rollup/plugin-replace": "5.0.5",
     "@rollup/plugin-typescript": "11.1.5",
     "@rollup/pluginutils": "5.0.5",
     "@types/chrome": "0.0.248",
