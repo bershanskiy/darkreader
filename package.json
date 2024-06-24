@@ -88,7 +88,7 @@
     "less": "4.2.0",
     "malevic": "0.20.1",
     "prettier": "3.2.5",
-    "puppeteer-core": "22.6.1",
+    "puppeteer-core": "22.12.0",
     "rollup": "4.13.2",
     "rollup-plugin-istanbul": "5.0.0",
     "ts-jest": "29.1.2",
